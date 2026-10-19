@@ -6,7 +6,7 @@ export const site = {
   external: {
     business: 'https://www.ex.io/',
     signIn: 'https://www.ex.io/zh/login',
-    exio: 'https://dev.exiovara.com/en',
-    trade: 'https://dev.exiovara.com/en/trade',
+    exio: 'https://www.ex.io',
+    trade: 'https://www.ex.io',
   },
 } as const;
