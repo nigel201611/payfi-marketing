@@ -1,0 +1,63 @@
+{
+  "name": "payfi-marketing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "payfi-marketing \u2014 EX.IO Agent Wallet marketing site built with React Bits",
+  "scripts": {
+    "dev": "next dev -p 3005",
+    "build": "next build",
+    "start": "next start -p 3005",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test --reporter=line,html --workers=4",
+    "test:e2e:headed": "playwright test --headed --workers=2",
+    "format": "prettier --write src __tests__ e2e scripts",
+    "format:check": "prettier --check src __tests__ e2e scripts",
+    "prepare": "husky",
+    "build:pages": "GITHUB_PAGES=true next build"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.468.0",
+    "motion": "^12.23.12",
+    "next": "16.2.12",
+    "radix-ui": "^1.8.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/postcss": "^4.1.14",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.1",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5",
+    "vitest": "^4.1.2"
+  },
+  "format": "prettier --write src __tests__ e2e scripts",
+  "format:check": "prettier --check src __tests__ e2e scripts",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "packageManager": "pnpm@10.12.1"
+}
