@@ -49,7 +49,7 @@ export function HeroSection() {
 
       <Container className="relative pt-14 pb-14 sm:pt-20 lg:pt-24 lg:pb-20">
         <div className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14 xl:gap-20">
-          <div className="max-w-[660px]">
+          <div className="max-w-[660px] lg:max-w-none">
             <div
               className="animate-hero-in border-border bg-card/50 inline-flex items-center gap-2.5 rounded-full border py-1.5 pr-2.5 pl-3 backdrop-blur-md"
               style={{ animationDelay: '40ms' }}
@@ -96,7 +96,7 @@ export function HeroSection() {
           </div>
 
           <div
-            className="animate-hero-in max-w-[440px] lg:justify-self-end lg:pt-14"
+            className="animate-hero-in max-w-[440px] lg:justify-self-end lg:pt-14 2xl:max-w-[480px]"
             style={{ animationDelay: '260ms' }}
           >
             {isZh ? (
@@ -157,7 +157,7 @@ export function HeroSection() {
           className="animate-hero-in relative mt-14 sm:mt-16 lg:mt-20"
           style={{ animationDelay: '420ms' }}
         >
-          <AgentWalletMock className="max-w-[860px]" />
+          <AgentWalletMock className="max-w-[860px] min-[2200px]:max-w-[1200px] 2xl:max-w-[1040px]" />
         </div>
       </Container>
     </section>
