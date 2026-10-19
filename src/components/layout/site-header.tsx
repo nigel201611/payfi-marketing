@@ -80,7 +80,7 @@ export function SiteHeader() {
             {t.nav.forBusinesses}
           </Link>
           <Link
-            href={site.external.trade}
+            href={site.external.signIn}
             target="_blank"
             rel="noreferrer noopener"
             className="text-foreground/65 hover:text-foreground hidden rounded-full px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors md:inline-flex"
@@ -161,7 +161,7 @@ export function SiteHeader() {
                 </SheetClose>
                 <SheetClose asChild>
                   <a
-                    href={site.external.trade}
+                    href={site.external.signIn}
                     target="_blank"
                     rel="noreferrer noopener"
                     className="text-foreground/85 hover:bg-foreground/5 flex items-center gap-1.5 rounded-xl px-3 py-3.5 text-base font-medium transition-colors"
