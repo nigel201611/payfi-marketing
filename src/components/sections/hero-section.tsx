@@ -2,6 +2,7 @@
 
 import { ArrowRight, KeyRound, ScrollText, ShieldCheck } from 'lucide-react';
 import BlurText from '@/components/react-bits/BlurText';
+import Magnet from '@/components/react-bits/Magnet';
 import ShinyText from '@/components/react-bits/ShinyText';
 import { AgentWalletMock } from '@/components/demo/agent-wallet-mock';
 import { Container } from '@/components/layout/container';
@@ -120,7 +121,14 @@ export function HeroSection() {
             )}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <WaitlistStarButton>{t.hero.primaryCta}</WaitlistStarButton>
+              <Magnet
+                padding={18}
+                magnetStrength={0.1}
+                maxOffset={8}
+                wrapperClassName="inline-flex"
+              >
+                <WaitlistStarButton>{t.hero.primaryCta}</WaitlistStarButton>
+              </Magnet>
               <a
                 href="#how-it-works"
                 className="group text-foreground/80 hover:text-foreground border-border bg-card/50 hover:bg-card inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full border px-6 text-sm font-semibold transition-all duration-300"
