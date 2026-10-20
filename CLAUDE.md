@@ -120,6 +120,11 @@ e2e/                   # Playwright flows
   a bounded Magnet (max offset 8px) + a sheen; keep the CTA click target stable.
 - The intent/funding panel uses React Bits `SpotlightCard` at low intensity over a flat vara-style
   surface: 16px radius, hairline border, no shadow, filled 48px inputs and a green gradient pill.
+- The welcome stage in light mode uses a near-white paper-grid background (fine grid + faint green
+  halo) across the whole left panel. Other stages keep the plain `bg-workspace` so dialogs and
+  forms stay clean. The welcome title uses React Bits `GradientText` with a plain-text fallback.
+  Avoid WebGL backgrounds (Aurora/Orb): a lost context leaves a broken canvas in headless/limited
+  GPU environments.
 - The previous EX.IO favicon (`public/icon.png`) is intentionally retained.
 
 ## Content & i18n

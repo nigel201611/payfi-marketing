@@ -34,6 +34,7 @@ import {
   type Order,
   type Scenario,
 } from '@/constants/terminal';
+import { useTheme } from '@/components/providers/theme-provider';
 import { useI18n } from '@/i18n/locale-provider';
 import { runSettlement } from '@/lib/agent/settlement-runner';
 import type { AgentEvent, SettlementContext } from '@/lib/agent/types';
@@ -44,6 +45,7 @@ import { createRuntimeMcpTransport } from '@/lib/mcp/runtime';
 
 export function Terminal() {
   const { t, locale } = useI18n();
+  const { theme } = useTheme();
   const [stage, setStage] = useState<Stage>('welcome');
   const [intentPhase, setIntentPhase] = useState<IntentPhase>('form');
   const [intent, setIntent] = useState<IntentValues>(defaultIntent);
@@ -400,8 +402,20 @@ export function Terminal() {
       <div className="relative grid flex-1 lg:h-[calc(100dvh-72px)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:overflow-hidden">
         <section className="border-border bg-workspace relative flex min-h-0 flex-col overflow-hidden lg:h-full">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-0 bg-[radial-gradient(70%_48%_at_18%_0%,rgba(255,255,255,0.035),transparent_68%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_42%)]" />
-            <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_50%_0%,black_10%,transparent_70%)] opacity-25" />
+            {theme === 'light' && stage === 'welcome' ? (
+              <>
+                <div className="absolute inset-0 bg-[#fbfcfb]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,13,11,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(10,13,11,0.05)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_50%_0%,black_10%,transparent_78%)] bg-[size:28px_28px]" />
+                <div className="absolute -top-24 right-0 size-80 rounded-full bg-[radial-gradient(circle,rgba(0,221,149,0.16),transparent_70%)] blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_8%_0%,rgba(255,255,255,0.9),transparent_55%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(0,221,149,0.03)_100%)]" />
+              </>
+            ) : theme === 'dark' ? (
+              <>
+                <div className="absolute inset-0 bg-[radial-gradient(70%_48%_at_18%_0%,rgba(255,255,255,0.035),transparent_68%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_42%)]" />
+                <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_50%_0%,black_10%,transparent_70%)] opacity-25" />
+              </>
+            ) : null}
           </div>
 
           <main

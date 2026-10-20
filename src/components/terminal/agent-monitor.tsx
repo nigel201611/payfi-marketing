@@ -7,14 +7,14 @@ import type { LogChannel, LogEntry } from '@/components/terminal/types';
 import { cn } from '@/lib/utils';
 
 const channelColor: Record<LogChannel, string> = {
-  SYS: 'text-white/35',
+  SYS: 'text-white/45',
   AGENT: 'text-brand',
   MCP: 'text-brand-soft/90',
-  CRB: 'text-white/55',
+  CRB: 'text-white/65',
   WEBHOOK: 'text-amber-300',
   WARN: 'text-amber-300',
   OK: 'text-brand',
-  API: 'text-white/55',
+  API: 'text-white/65',
 };
 
 export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
@@ -40,11 +40,11 @@ export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
             className="bg-brand size-1.5 rounded-full shadow-[0_0_10px_rgba(0,221,149,0.8)]"
             aria-hidden="true"
           />
-          <p className="font-mono text-[0.65rem] font-medium tracking-[0.16em] text-white/55 uppercase">
+          <p className="font-mono text-[0.875rem] font-medium tracking-[0.16em] text-white/65 uppercase">
             {t.common.monitor}
           </p>
         </div>
-        <span className="font-mono text-[0.58rem] tracking-[0.1em] text-white/25 uppercase">
+        <span className="font-mono text-[0.72rem] tracking-[0.1em] text-white/35 uppercase">
           {t.common.liveSandbox}
         </span>
       </div>
@@ -54,18 +54,20 @@ export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
         role="log"
         aria-live="polite"
         aria-label={t.common.monitor}
-        className="terminal-scroll flex-1 overflow-y-auto px-5 py-5 font-mono text-[11.5px] leading-[1.9]"
+        className="terminal-scroll flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 font-mono text-[16px] leading-[1.7]"
       >
         {logs.length === 0 ? (
-          <p className="text-white/25">{t.common.monitorEmpty}</p>
+          <p className="text-white/30">{t.common.monitorEmpty}</p>
         ) : (
           logs.map((entry) => (
-            <div key={entry.id} className="flex animate-[log-in_0.28s_ease-out_both] gap-2.5">
-              <span className="shrink-0 text-white/25">{timeFormatter.format(entry.at)}</span>
-              <span className={cn('shrink-0 font-medium', channelColor[entry.channel])}>
+            <div key={entry.id} className="flex animate-[log-in_0.28s_ease-out_both] gap-3">
+              <span className="shrink-0 text-[13px] text-white/35">
+                {timeFormatter.format(entry.at)}
+              </span>
+              <span className={cn('shrink-0 text-sm font-medium', channelColor[entry.channel])}>
                 [{entry.channel}]
               </span>
-              <span className="min-w-0 text-white/60">
+              <span className="min-w-0 break-words text-white/75">
                 {formatMessage(t.logs[entry.key], entry.params ?? {})}
               </span>
             </div>
@@ -73,12 +75,12 @@ export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
         )}
         <span
           aria-hidden="true"
-          className="bg-brand mt-1 inline-block h-3 w-1.5 align-middle"
+          className="bg-brand mt-1 inline-block h-5 w-1.5 align-middle"
           style={{ animation: 'caret 1s steps(1, end) infinite' }}
         />
       </div>
 
-      <div className="shrink-0 border-t border-white/[0.07] px-5 py-3 font-mono text-[0.56rem] tracking-[0.06em] text-white/25">
+      <div className="shrink-0 border-t border-white/[0.07] px-5 py-3 font-mono text-[0.7rem] tracking-[0.06em] text-white/30">
         {t.common.mockRuntime}
       </div>
     </aside>

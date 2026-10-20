@@ -1,13 +1,17 @@
 'use client';
 
 import { ShieldCheck } from 'lucide-react';
+import GradientText from '@/components/react-bits/GradientText';
 import { AnimatedCta } from '@/components/terminal/animated-cta';
 import { Eyebrow } from '@/components/terminal/ui';
+import { useTheme } from '@/components/providers/theme-provider';
 import { useI18n } from '@/i18n/locale-provider';
 
 export function WelcomeStep({ onStart }: { onStart: () => void }) {
   const { t } = useI18n();
+  const { theme } = useTheme();
   const copy = t.welcome;
+  const isLight = theme === 'light';
 
   return (
     <div className="flex min-h-[calc(100dvh-220px)] flex-col justify-center py-10 lg:py-16">
@@ -20,7 +24,25 @@ export function WelcomeStep({ onStart }: { onStart: () => void }) {
         style={{ animationDelay: '90ms' }}
       >
         <span className="block">{copy.greeting}</span>
-        <span className="text-gradient block pb-1">{copy.company}</span>
+        {isLight ? (
+          <span className="relative block pb-1">
+            {/* Static fallback stays visible if the gradient text fails to paint. */}
+            <span aria-hidden="true" className="text-accent-text absolute inset-0">
+              {copy.company}
+            </span>
+            <GradientText
+              colors={['#007a52', '#00dd95', '#36cdca']}
+              animationSpeed={12}
+              variant="flow"
+              scale={2}
+              yoyo
+            >
+              {copy.company}
+            </GradientText>
+          </span>
+        ) : (
+          <span className="text-gradient block pb-1">{copy.company}</span>
+        )}
       </h1>
 
       <div className="animate-hero-in mt-7 max-w-2xl" style={{ animationDelay: '220ms' }}>
