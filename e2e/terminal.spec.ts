@@ -7,13 +7,60 @@ async function openTerminal(page: import('@playwright/test').Page) {
 
 async function reachFunding(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+  await page.getByRole('button', { name: 'Skip and use defaults' }).click();
   await page.getByRole('heading', { name: 'Intent authorization & funding' }).waitFor();
   await page.getByRole('button', { name: 'Confirm authorization' }).click();
   await page.getByRole('heading', { name: 'Fund your dedicated virtual account' }).waitFor();
 }
 
 test.describe('Naka RWA Agent terminal', () => {
-  test('welcome, theme and language toggles persist', async ({ page }) => {
+  test('launch brief selects products and keeps recent history', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Desktop-only launch dialog test');
+
+    await openTerminal(page);
+    await page.evaluate(() => window.localStorage.removeItem('naka-launch-history'));
+
+    await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+    await page
+      .getByRole('textbox', { name: 'Purchase brief' })
+      .fill('Buy 30-day U.S. Treasury bonds with a $16,000 budget');
+    await page.getByRole('button', { name: 'Start terminal' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Intent authorization & funding' })).toBeVisible(
+      { timeout: 15_000 },
+    );
+    await expect(page.getByRole('checkbox', { name: 'Bonds' })).toBeChecked();
+
+    await page.goto('/');
+    await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+    await expect(
+      page.getByRole('button', { name: /Buy 30-day U.S. Treasury bonds/ }),
+    ).toBeVisible();
+  });
+
+  test('intent back returns to the brief and launch back returns home', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Desktop-only navigation test');
+
+    await page.goto('/');
+    await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+
+    const brief = 'Buy $6,000 of new energy revenue rights';
+    await page.getByRole('textbox', { name: 'Purchase brief' }).fill(brief);
+    await page.getByRole('button', { name: 'Start terminal' }).click();
+    await expect(page.getByRole('heading', { name: 'Intent authorization & funding' })).toBeVisible(
+      { timeout: 15_000 },
+    );
+
+    await page.getByRole('button', { name: 'Back to brief' }).click();
+    await expect(page.getByRole('textbox', { name: 'Purchase brief' })).toHaveValue(brief);
+
+    await page.getByRole('button', { name: 'Back to welcome' }).click();
+    await expect(page.getByRole('button', { name: /Launch Agent Terminal/i })).toBeVisible();
+  });
+
+  test('welcome, theme and language toggles persist', async ({ page }, testInfo) => {
     await openTerminal(page);
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Welcome');
@@ -27,6 +74,10 @@ test.describe('Naka RWA Agent terminal', () => {
     await expect(html).toHaveAttribute('data-theme', 'light');
 
     await expect(html).toHaveAttribute('lang', 'en');
+    if (testInfo.project.name === 'desktop') {
+      await page.getByRole('button', { name: 'Switch to Chinese' }).hover();
+      await expect(page.getByText(/Current language: English/)).toBeVisible();
+    }
     await page.getByRole('button', { name: 'Switch to Chinese' }).click();
     await expect(html).toHaveAttribute('lang', 'zh-CN');
     await expect(page.getByRole('button', { name: '启动 Agent 交易终端' })).toBeVisible();
@@ -116,6 +167,7 @@ test.describe('Naka RWA Agent terminal', () => {
     await openTerminal(page);
     await expect(page.getByRole('button', { name: /Launch Agent Terminal/i })).toBeVisible();
     await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+    await page.getByRole('button', { name: 'Skip and use defaults' }).click();
     await expect(
       page.getByRole('heading', { name: 'Intent authorization & funding' }),
     ).toBeVisible();

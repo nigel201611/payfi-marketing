@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { AgentMonitor } from '@/components/terminal/agent-monitor';
 import { IntentStep } from '@/components/terminal/intent-step';
+import { LaunchStep } from '@/components/terminal/launch-step';
 import { ApprovalOverlay, PaymentOverlay, RejectedOverlay } from '@/components/terminal/overlays';
 import { ReceiptStep } from '@/components/terminal/receipt-step';
 import { SettlementStep } from '@/components/terminal/settlement-step';
@@ -36,6 +37,8 @@ import {
 import { useI18n } from '@/i18n/locale-provider';
 import { runSettlement } from '@/lib/agent/settlement-runner';
 import type { AgentEvent, SettlementContext } from '@/lib/agent/types';
+import { applyBriefAnalysis } from '@/lib/intent-parser';
+import type { BriefAnalysisResult } from '@/lib/launch-analysis';
 import type { McpTransport } from '@/lib/mcp/types';
 import { createRuntimeMcpTransport } from '@/lib/mcp/runtime';
 
@@ -51,6 +54,7 @@ export function Terminal() {
   const [settled, setSettled] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [lastLaunchBrief, setLastLaunchBrief] = useState('');
 
   const timers = useRef<number[]>([]);
   const runId = useRef(0);
@@ -113,7 +117,47 @@ export function Terminal() {
 
   const handleStart = () => {
     addLog('AGENT', 'agentLaunched');
-    schedule(() => setStage('intent'), timing.launch);
+    setStage('intent');
+  };
+
+  const handleOpenLaunch = () => {
+    addLog('AGENT', 'agentIntake');
+    setStage('launch');
+  };
+
+  const handleLaunchBack = () => {
+    setStage('welcome');
+  };
+
+  const handleIntentBack = () => {
+    runId.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    clearTimers();
+    setIntentPhase('form');
+    setIntent(defaultIntent);
+    setOrder(null);
+    setSelectedAssetId(null);
+    setOverlay(null);
+    setSettled(false);
+    setReceipt(null);
+    setStage('launch');
+  };
+
+  const handleLaunchSubmit = (brief: string, result: BriefAnalysisResult) => {
+    setLastLaunchBrief(brief);
+    setIntent((previous) => applyBriefAnalysis(previous, result.analysis));
+    addLog('AGENT', 'agentBrief', { brief: brief.slice(0, 160) });
+    addLog('AGENT', 'agentBriefAnalyzed', {
+      source: result.source === 'llm' ? 'LLM' : 'policy',
+    });
+    handleStart();
+  };
+
+  const handleLaunchSkip = () => {
+    setLastLaunchBrief('');
+    setIntent(defaultIntent);
+    handleStart();
   };
 
   const handleIntentChange = (patch: IntentPatch) => {
@@ -320,6 +364,7 @@ export function Terminal() {
     runId.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
+    setLastLaunchBrief('');
     clearTimers();
     setStage('welcome');
     setIntentPhase('form');
@@ -373,7 +418,16 @@ export function Terminal() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  {stage === 'welcome' ? <WelcomeStep onStart={handleStart} /> : null}
+                  {stage === 'welcome' ? <WelcomeStep onStart={handleOpenLaunch} /> : null}
+
+                  {stage === 'launch' ? (
+                    <LaunchStep
+                      initialBrief={lastLaunchBrief}
+                      onBack={handleLaunchBack}
+                      onSubmit={handleLaunchSubmit}
+                      onSkip={handleLaunchSkip}
+                    />
+                  ) : null}
 
                   {stage === 'intent' ? (
                     <IntentStep
@@ -384,6 +438,7 @@ export function Terminal() {
                       onConfirm={handleConfirmIntent}
                       onSimulate={handleSimulate}
                       onAbandon={handleAbandon}
+                      onBack={handleIntentBack}
                     />
                   ) : null}
 

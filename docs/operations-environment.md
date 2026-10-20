@@ -18,6 +18,7 @@
 
 ```text
 Browser
+  ├─ /api/agent/intake      → BFF：LLM 分析购买需求 + 确定性兜底
   ├─ 确定性策略（默认）/ 可选 LLM planner
   ├─ /api/agent/plan        → BFF：LLM 生成计划 + 确定性校验
   └─ /api/mcp/tool          → BFF：MCP facade
@@ -389,7 +390,21 @@ curl -sS -X POST http://127.0.0.1:3005/api/agent/plan \
 - 未配置 LLM：`plan.source = "deterministic"`，`warning = "LLM planner not configured"`
 - 已配置 LLM：`plan.source = "llm"`；若模型输出不合规，回退并返回 warning
 
-### 7.3 MCP 工具接口
+### 7.3 Launch 需求分析
+
+```bash
+curl -sS -X POST http://127.0.0.1:3005/api/agent/intake \
+  -H 'content-type: application/json' \
+  -d '{"brief":"Buy $16,000 of 30-day U.S. Treasury bonds, T+0."}'
+```
+
+预期：
+
+- 配置 LLM：`source = "llm"`，返回 `categories`、`maxBudget`、`risk`、`settlement`
+- 未配置或调用失败：`source = "policy"`，使用确定性解析
+- 无论哪种来源，结果都会经过服务端校验；格式异常时回退到确定性结果
+
+### 7.4 MCP 工具接口
 
 CRB MCP：
 
@@ -435,6 +450,7 @@ curl -sS -X POST http://127.0.0.1:3005/api/mcp/tool \
 | Kimi 返回 401               | Key 与 Base URL 区域不一致                                | 国内 Key 改用 `https://api.moonshot.cn/v1`                           |
 | Codex 返回 404 / 不支持     | 走了 Chat Completions                                     | 使用 `AGENT_LLM_PROTOCOL=responses`，或改用 `openai` 并覆盖 Base URL |
 | LLM 计划被拒绝              | 模型改动了金额、收款方或钱包                              | 属安全预期；检查 prompt 或模型输出                                   |
+| 启动需求始终为 `policy`     | LLM 未配置或 intake 调用失败                              | 检查 `AGENT_LLM_*` 与 `/api/agent/intake` 响应                       |
 | `/api/mcp/tool` 返回 400    | 工具不在白名单                                            | 使用四个结算/确认工具，或调整 `bffToolNames`                         |
 | `/api/mcp/tool` 返回 502    | 对应 MCP 不可达、超时、鉴权失败                           | 按响应 `server` 检查 `MCP_CRB_*` 或 `MCP_RWA_*` 的 URL、Token、网络  |
 | Pages 上接口 404            | 静态构建已剔除 BFF                                        | 预期行为；使用 Node 部署启用 BFF                                     |

@@ -88,9 +88,13 @@ e2e/                   # Playwright flows
   `verify_crb_settlement`, `execute_onchain_settlement`, `confirm_delivery`.
 - Settlement auto-calls `execute_crb_payment` → `verify_crb_settlement` →
   `execute_onchain_settlement`; receipt confirmation calls `confirm_delivery`.
-- BFF routes are `src/app/api/**/route.server.ts`: `/api/agent/plan` (deterministic policy +
-  optional LLM planner) and `/api/mcp/tool` (MCP facade). The `.server.ts` extension plus
-  `pageExtensions` in `next.config.ts` keeps them out of the Pages static export.
+- BFF routes are `src/app/api/**/route.server.ts`: `/api/agent/intake` (launch brief analysis with
+  deterministic fallback), `/api/agent/plan` (deterministic policy + optional LLM planner) and
+  `/api/mcp/tool` (MCP facade). The `.server.ts` extension plus `pageExtensions` in
+  `next.config.ts` keeps them out of the Pages static export.
+- Launch flow: Welcome → Step 01 intake stage → Step 02 intent. The intake brief is analyzed by the
+  LLM when configured; back from intent aborts the in-flight analysis, clears intent/order/timer
+  state and keeps the last brief plus the five most recent briefs in localStorage.
 - Runtime transport: `NEXT_PUBLIC_BFF_ENABLED=true` calls the BFF; static Pages builds use the
   in-browser mock. Set `MCP_CRB_SERVER_URL` / `MCP_CRB_SERVER_TOKEN` and `MCP_RWA_SERVER_URL` /
   `MCP_RWA_SERVER_TOKEN` on the server. `mcpToolServer` routes CRB funding/payment/verification to

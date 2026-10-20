@@ -12,7 +12,7 @@ export type LogEntry = {
   params?: Record<string, string | number>;
 };
 
-export type Stage = 'welcome' | 'intent' | 'strategy' | 'settlement' | 'receipt';
+export type Stage = 'welcome' | 'launch' | 'intent' | 'strategy' | 'settlement' | 'receipt';
 export type IntentPhase = 'form' | 'funding';
 export type Overlay = 'approval' | 'payment' | 'rejected' | null;
 

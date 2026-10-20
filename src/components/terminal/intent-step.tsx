@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
-import { Check, Loader2 } from 'lucide-react';
-import SpotlightCard from '@/components/react-bits/SpotlightCard';
-import { useTheme } from '@/components/providers/theme-provider';
+import { useState } from 'react';
+import { ArrowLeft, Check, Coins, Landmark, Leaf, Loader2 } from 'lucide-react';
+import AnimatedContent from '@/components/react-bits/AnimatedContent';
 import { ActionButton, FieldLabel, StatusDot, TextField } from '@/components/terminal/ui';
+import { VaraPanel } from '@/components/terminal/vara-panel';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import type { IntentPatch } from '@/components/terminal/types';
 import { demoConfig, type IntentValues, type Scenario } from '@/constants/terminal';
 import { useI18n } from '@/i18n/locale-provider';
@@ -18,39 +19,16 @@ type IntentStepProps = {
   onConfirm: () => void;
   onSimulate: (scenario: Scenario) => void;
   onAbandon: () => void;
+  onBack: () => void;
 };
 
 const categoryKeys = ['energy', 'moneyMarket', 'bonds'] as const;
 
-const spotlightPanelStyle = {
-  borderRadius: 16,
-  padding: 0,
-  boxShadow: 'none',
-  '--spotlight-card-surface': 'var(--workspace-card)',
-  '--spotlight-card-border': 'var(--border)',
-  '--spotlight-card-shadow': 'none',
-} as CSSProperties;
-
-function VaraPanel({ children }: { children: ReactNode }) {
-  const { theme } = useTheme();
-
-  return (
-    <SpotlightCard
-      theme={theme}
-      className="mt-8"
-      style={spotlightPanelStyle}
-      intensity={0.08}
-      spotlightColor="#00dd95"
-      spotlightSize={300}
-      softness={0.8}
-      borderGlow={0.3}
-      proximity={60}
-      grain={0}
-    >
-      {children}
-    </SpotlightCard>
-  );
-}
+const categoryIcons = {
+  energy: Leaf,
+  moneyMarket: Coins,
+  bonds: Landmark,
+} as const;
 
 function SectionHeader({ index, title }: { index: string; title: string }) {
   return (
@@ -74,13 +52,24 @@ export function IntentStep({
   onConfirm,
   onSimulate,
   onAbandon,
+  onBack,
 }: IntentStepProps) {
   const { t } = useI18n();
   const copy = t.intent;
+  const selectedWallet = copy.wallets.find((wallet) => wallet.value === intent.wallet);
 
   return (
     <div className="py-8 lg:py-10">
-      <p className="text-muted-foreground text-sm font-medium">{copy.eyebrow}</p>
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+      >
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        {copy.back}
+      </button>
+
+      <p className="text-muted-foreground mt-5 text-sm font-medium">{copy.eyebrow}</p>
       <h2 className="font-display text-foreground mt-1.5 text-[1.75rem] leading-9 font-extrabold tracking-[-0.02em] sm:text-[2rem] sm:leading-10">
         {copy.title}
       </h2>
@@ -92,14 +81,24 @@ export function IntentStep({
               <fieldset>
                 <legend className="sr-only">{copy.categoriesLabel}</legend>
                 <SectionHeader index="1" title={copy.categoriesTitle} />
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+                <AnimatedContent
+                  trigger="mount"
+                  stagger={0.08}
+                  distance={14}
+                  duration={0.5}
+                  blur={4}
+                  scale={0.98}
+                  className="mt-4 grid gap-2"
+                >
                   {categoryKeys.map((key) => {
                     const selected = intent.categories[key];
+                    const Icon = categoryIcons[key];
+
                     return (
                       <label
                         key={key}
                         className={cn(
-                          'flex min-h-[4.5rem] cursor-pointer flex-col justify-center gap-2.5 rounded-2xl border px-4 py-3.5 transition-colors',
+                          'flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
                           selected
                             ? 'border-brand/45 bg-brand/[0.06]'
                             : 'border-border bg-background/40 hover:border-foreground/20 hover:bg-foreground/[0.03]',
@@ -117,6 +116,20 @@ export function IntentStep({
                         />
                         <span
                           className={cn(
+                            'grid size-9 shrink-0 place-items-center rounded-xl border transition-colors',
+                            selected
+                              ? 'border-brand/25 bg-brand/10 text-accent-text'
+                              : 'border-border bg-foreground/[0.03] text-muted-foreground',
+                          )}
+                          aria-hidden="true"
+                        >
+                          <Icon className="size-4" />
+                        </span>
+                        <span className="text-foreground min-w-0 flex-1 truncate text-sm font-semibold">
+                          {copy.categories[key]}
+                        </span>
+                        <span
+                          className={cn(
                             'grid size-5 shrink-0 place-items-center rounded-full border transition-colors',
                             selected
                               ? 'border-brand bg-brand text-ink'
@@ -126,13 +139,10 @@ export function IntentStep({
                         >
                           {selected ? <Check className="size-3" /> : null}
                         </span>
-                        <span className="text-foreground text-sm leading-snug font-semibold">
-                          {copy.categories[key]}
-                        </span>
                       </label>
                     );
                   })}
-                </div>
+                </AnimatedContent>
               </fieldset>
 
               <fieldset>
@@ -228,16 +238,6 @@ export function IntentStep({
                   </div>
                 </div>
               </fieldset>
-
-              <div className="border-brand/20 bg-brand/[0.06] rounded-lg border px-4 py-3.5">
-                <p className="text-accent-text flex items-center gap-2 text-[0.68rem] font-bold tracking-[0.1em] uppercase">
-                  <StatusDot />
-                  {copy.policyLabel}
-                </p>
-                <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                  {copy.policyNote}
-                </p>
-              </div>
             </div>
 
             <aside className="border-border bg-foreground/[0.02] border-t p-5 sm:p-7 lg:border-t-0 lg:border-l lg:p-8">
@@ -289,53 +289,54 @@ export function IntentStep({
                 </div>
               </section>
 
-              <fieldset className="mt-6">
-                <legend className="text-foreground/60 mb-1.5 block text-sm font-semibold">
+              <section className="mt-6">
+                <FieldLabel
+                  htmlFor="custody-wallet"
+                  className="text-foreground/60 mb-1.5 block text-sm font-semibold"
+                >
                   {copy.custodyLabel}
-                </legend>
-                <div className="grid gap-2">
-                  {copy.wallets.map((wallet) => {
-                    const active = intent.wallet === wallet.value;
-                    return (
-                      <label
-                        key={wallet.value}
-                        className={cn(
-                          'flex cursor-pointer items-center gap-3 rounded-2xl border px-3.5 py-3 transition-colors',
-                          active
-                            ? 'border-brand/45 bg-brand/[0.06]'
-                            : 'border-border bg-background/40 hover:border-foreground/20',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="custody-wallet"
-                          value={wallet.value}
-                          className="sr-only"
-                          checked={active}
-                          onChange={() => onChange({ wallet: wallet.value as 'a' | 'b' })}
-                        />
-                        <span
-                          className={cn(
-                            'grid size-5 shrink-0 place-items-center rounded-full border transition-colors',
-                            active ? 'border-brand bg-brand' : 'border-muted-foreground/40',
-                          )}
-                          aria-hidden="true"
-                        >
-                          {active ? <span className="bg-ink size-1.5 rounded-full" /> : null}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="text-foreground block font-mono text-[0.8rem] font-semibold tracking-wide">
+                </FieldLabel>
+                <Select
+                  value={intent.wallet}
+                  onValueChange={(value) => onChange({ wallet: value as 'a' | 'b' })}
+                >
+                  <SelectTrigger
+                    id="custody-wallet"
+                    className="bg-foreground/[0.03] focus-visible:ring-brand/30 h-12 rounded-lg border-0 px-3.5 py-1.5 text-left"
+                  >
+                    <span className="flex min-w-0 flex-col items-start">
+                      <span className="text-foreground truncate font-mono text-sm font-semibold">
+                        {selectedWallet?.address}
+                      </span>
+                      <span className="text-muted-foreground truncate text-xs">
+                        {selectedWallet?.name}
+                      </span>
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {copy.wallets.map((wallet) => (
+                      <SelectItem key={wallet.value} value={wallet.value}>
+                        <span className="flex min-w-0 flex-col items-start">
+                          <span className="text-foreground font-mono text-xs font-semibold">
                             {wallet.address}
                           </span>
-                          <span className="text-muted-foreground mt-0.5 block truncate text-xs">
-                            {wallet.name}
-                          </span>
+                          <span className="text-muted-foreground text-[0.7rem]">{wallet.name}</span>
                         </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </section>
+
+              <div className="border-brand/20 bg-brand/[0.06] mt-6 rounded-lg border px-4 py-3.5">
+                <p className="text-accent-text flex items-center gap-2 text-[0.68rem] font-bold tracking-[0.1em] uppercase">
+                  <StatusDot />
+                  {copy.policyLabel}
+                </p>
+                <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                  {copy.policyNote}
+                </p>
+              </div>
 
               {error ? (
                 <p

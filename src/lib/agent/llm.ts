@@ -136,31 +136,12 @@ function readResponsesText(payload: unknown): string | null {
   return null;
 }
 
-/**
- * Optional server-side planner. Providers are selected with
- * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai); a missing
- * key keeps the deterministic policy, so the demo never depends on a model.
- */
-export async function requestLlmSettlementPlan(
-  context: SettlementContext,
-  fetchImpl: typeof fetch = fetch,
+async function requestModelJson(
+  config: ResolvedLlmConfig,
+  system: string,
+  user: string,
+  fetchImpl: typeof fetch,
 ): Promise<LlmPlanResponse> {
-  const config = resolveLlmConfig();
-  if (!config) return { error: 'LLM planner not configured' };
-
-  const system = [
-    'You are the settlement planner for a mock agentic RWA payment terminal.',
-    'Return JSON only, with this exact shape:',
-    '{"rationale":"one short sentence","steps":[',
-    '{"tool":"execute_crb_payment","input":{"order_id":"...","payee_crb_acct":"...","amount":0}},',
-    `{"tool":"verify_crb_settlement","input":{"order_id":"...","crb_tx_id":"${CRB_TX_PLACEHOLDER}"}},`,
-    '{"tool":"execute_onchain_settlement","input":{"address_x":"...","rwa_amount":0}}]}',
-    'Keep the exact order, payee, amount, wallet and RWA amount from the context.',
-    'Never invent or change a value. No markdown, no extra text.',
-  ].join('\n');
-
-  const user = JSON.stringify({ task: 'build_settlement_plan', context });
-
   try {
     const response =
       config.protocol === 'responses'
@@ -214,8 +195,61 @@ export async function requestLlmSettlementPlan(
     return parsed ? { content: parsed } : { error: `${config.provider} returned invalid JSON` };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      return { error: 'LLM planner timed out' };
+      return { error: 'LLM request timed out' };
     }
     return { error: error instanceof Error ? error.message : 'LLM request failed' };
   }
+}
+
+/**
+ * Optional server-side planner. Providers are selected with
+ * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai); a missing
+ * key keeps the deterministic policy, so the demo never depends on a model.
+ */
+export async function requestLlmSettlementPlan(
+  context: SettlementContext,
+  fetchImpl: typeof fetch = fetch,
+): Promise<LlmPlanResponse> {
+  const config = resolveLlmConfig();
+  if (!config) return { error: 'LLM planner not configured' };
+
+  const system = [
+    'You are the settlement planner for a mock agentic RWA payment terminal.',
+    'Return JSON only, with this exact shape:',
+    '{"rationale":"one short sentence","steps":[',
+    '{"tool":"execute_crb_payment","input":{"order_id":"...","payee_crb_acct":"...","amount":0}},',
+    `{"tool":"verify_crb_settlement","input":{"order_id":"...","crb_tx_id":"${CRB_TX_PLACEHOLDER}"}},`,
+    '{"tool":"execute_onchain_settlement","input":{"address_x":"...","rwa_amount":0}}]}',
+    'Keep the exact order, payee, amount, wallet and RWA amount from the context.',
+    'Never invent or change a value. No markdown, no extra text.',
+  ].join('\n');
+
+  const user = JSON.stringify({ task: 'build_settlement_plan', context });
+  return requestModelJson(config, system, user, fetchImpl);
+}
+
+/** Analyze the launch brief into product categories and optional limits. */
+export async function requestLlmBriefAnalysis(
+  brief: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<LlmPlanResponse> {
+  const config = resolveLlmConfig();
+  if (!config) return { error: 'LLM analyst not configured' };
+
+  const system = [
+    'You are the intake analyst for a mock agentic RWA payment terminal.',
+    'Return JSON only, with this exact shape:',
+    '{"categories":{"energy":false,"moneyMarket":false,"bonds":false},',
+    '"maxBudget":null,"singleLimit":null,"risk":null,"settlement":null,',
+    '"summary":"one short sentence"}',
+    'Category meanings: energy = new energy / solar / revenue rights;',
+    'moneyMarket = money market funds / MMF; bonds = Treasury / bonds / fixed income.',
+    'Use null for any amount, risk or settlement not explicitly stated.',
+    'Never invent limits. Select every product category the client mentions.',
+    'risk must be low|medium|high or null; settlement must be T+0|T+1|T+2 or null.',
+    'Write summary in the same language as the brief. No markdown, no extra text.',
+  ].join('\n');
+
+  const user = JSON.stringify({ task: 'analyze_purchase_brief', brief });
+  return requestModelJson(config, system, user, fetchImpl);
 }
