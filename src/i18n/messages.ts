@@ -2,8 +2,8 @@ export type Locale = 'en' | 'zh';
 
 const en = {
   common: {
-    brand: 'NAKA',
-    product: 'RWA AGENT',
+    brand: 'AGENTIC',
+    product: 'PAYMENT',
     skipToContent: 'Skip to content',
     reset: 'Reset demo',
     languageSwitch: 'Switch to Chinese',
@@ -44,11 +44,13 @@ const en = {
     eyebrow: 'STEP 02 · INTENT & FUNDING',
     title: 'Intent authorization & funding',
     categoriesLabel: 'Purchase targets (RWA categories, multi-select)',
+    categoriesTitle: 'Purchase targets',
     categories: {
       energy: 'New energy',
       moneyMarket: 'Money market funds',
       bonds: 'Bonds',
     },
+    preferencesLabel: 'Settlement & risk preferences',
     minApyLabel: 'Minimum APY',
     settlementLabel: 'Settlement',
     settlementOptions: ['T+0', 'T+1', 'T+2'],
@@ -59,9 +61,12 @@ const en = {
     maxBudgetLabel: 'Maximum budget (USD)',
     custodyLabel: 'Custody address',
     wallets: [
-      { value: 'a', label: '0x3f5e…9aC2 (Institutional custody wallet A)' },
-      { value: 'b', label: '0x71Bb…04dE (Institutional custody wallet B)' },
+      { value: 'a', address: '0x3f5e…9aC2', name: 'Institutional custody wallet A' },
+      { value: 'b', address: '0x71Bb…04dE', name: 'Institutional custody wallet B' },
     ],
+    policyLabel: 'Agent policy',
+    policyNote:
+      'Orders within the single limit are auto-paid by the agent. Larger orders pause for human approval.',
     confirm: 'Confirm authorization',
     validation: {
       categories: 'Select at least one RWA category.',
@@ -71,6 +76,9 @@ const en = {
     funding: {
       eyebrow: 'FUNDING',
       title: 'Fund your dedicated virtual account',
+      description:
+        'Send fiat to this dedicated CRB virtual account. The agent starts investing as soon as the deposit webhook arrives.',
+      scenarioLabel: 'Roadshow controls',
       routing: 'Routing Number',
       account: 'Account Number',
       waiting: 'Waiting for deposit...',
@@ -187,10 +195,14 @@ const en = {
     userApproved: 'Human approval received. Releasing payment.',
     userRejected: 'Human rejected payment. Cancelling order and releasing budget.',
     agentPayment: 'Payment request submitted. Waiting for the CRB callback...',
+    agentPlan: 'Settlement plan ready via {source} ({count} MCP tool calls).',
     mcpExecutePayment: 'Calling execute_crb_payment ...',
     crbClearing: 'CRB fiat clearing in progress...',
     crbPaid: 'CRB clearing complete. TxID: {txId}.',
+    mcpVerifySettlement: 'Calling verify_crb_settlement ...',
     mcpOnchain: 'Calling execute_onchain_settlement ...',
+    mcpConfirmDelivery: 'Calling confirm_delivery ...',
+    mcpError: 'MCP call {tool} failed: {error}.',
     agentSettling: 'Fiat received. Transferring RWA tokens to the custody wallet...',
     delivered: 'RWA delivery confirmed to {wallet}.',
     userReceipt: 'Receipt confirmed. Generating final audit chain...',
@@ -234,8 +246,8 @@ export type Messages = typeof en;
 
 const zh: Messages = {
   common: {
-    brand: 'NAKA',
-    product: 'RWA AGENT',
+    brand: 'AGENTIC',
+    product: 'PAYMENT',
     skipToContent: '跳到主要内容',
     reset: '重置演示',
     languageSwitch: '切换到英文',
@@ -275,11 +287,13 @@ const zh: Messages = {
     eyebrow: 'STEP 02 · 意图授权与入金',
     title: '意图授权与入金',
     categoriesLabel: '购买对象（RWA 类别，可单/复选）',
+    categoriesTitle: '购买对象',
     categories: {
       energy: '新能源',
       moneyMarket: '货币基金',
       bonds: '债券',
     },
+    preferencesLabel: '结算与风险偏好',
     minApyLabel: '最小 APY',
     settlementLabel: '结算时效',
     settlementOptions: ['T+0', 'T+1', 'T+2'],
@@ -290,9 +304,11 @@ const zh: Messages = {
     maxBudgetLabel: '最大预算（USD）',
     custodyLabel: '托管地址',
     wallets: [
-      { value: 'a', label: '0x3f5e…9aC2（机构托管钱包 A）' },
-      { value: 'b', label: '0x71Bb…04dE（机构托管钱包 B）' },
+      { value: 'a', address: '0x3f5e…9aC2', name: '机构托管钱包 A' },
+      { value: 'b', address: '0x71Bb…04dE', name: '机构托管钱包 B' },
     ],
+    policyLabel: 'Agent 策略',
+    policyNote: '单笔限额内由 Agent 自动支付；超过限额将暂停并请求人工审批。',
     confirm: '确认授权',
     validation: {
       categories: '请至少选择一个 RWA 类别。',
@@ -302,6 +318,9 @@ const zh: Messages = {
     funding: {
       eyebrow: '入金',
       title: '请向您的专属虚拟账户充值',
+      description:
+        '向该 CRB 专属虚拟账户汇入法币；入金 Webhook 到达后，Agent 会立即开始执行投资策略。',
+      scenarioLabel: '路演控制',
       routing: 'Routing Number',
       account: 'Account Number',
       waiting: '等待充值入金...',
@@ -417,10 +436,14 @@ const zh: Messages = {
     userApproved: '收到人工批准，释放支付指令。',
     userRejected: '人工拒绝支付，取消订单并释放预算。',
     agentPayment: '支付请求已提交，Agent 等待结果中...',
+    agentPlan: '结算计划已生成（{source}，{count} 个 MCP 调用）。',
     mcpExecutePayment: '调用 execute_crb_payment ...',
     crbClearing: 'CRB 法币清算中...',
     crbPaid: 'CRB 清算完成，TxID: {txId}。',
+    mcpVerifySettlement: '调用 verify_crb_settlement ...',
     mcpOnchain: '调用 execute_onchain_settlement ...',
+    mcpConfirmDelivery: '调用 confirm_delivery ...',
+    mcpError: 'MCP 调用 {tool} 失败：{error}。',
     agentSettling: '法币已到账，正在向托管钱包划转 RWA...',
     delivered: 'RWA 已划转至 {wallet}。',
     userReceipt: '用户确认收货，生成最终审计链...',

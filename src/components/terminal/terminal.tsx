@@ -34,6 +34,10 @@ import {
   type Scenario,
 } from '@/constants/terminal';
 import { useI18n } from '@/i18n/locale-provider';
+import { runSettlement } from '@/lib/agent/settlement-runner';
+import type { AgentEvent, SettlementContext } from '@/lib/agent/types';
+import type { McpTransport } from '@/lib/mcp/types';
+import { createRuntimeMcpTransport } from '@/lib/mcp/runtime';
 
 export function Terminal() {
   const { t, locale } = useI18n();
@@ -53,6 +57,9 @@ export function Terminal() {
   const logId = useRef(0);
   const seeded = useRef(false);
   const mainRef = useRef<HTMLElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const mcpTransportRef = useRef<McpTransport | null>(null);
+  const receiptBusyRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     timers.current.forEach((id) => window.clearTimeout(id));
@@ -83,7 +90,10 @@ export function Terminal() {
   }, [addLog, schedule]);
 
   useEffect(() => {
-    return () => clearTimers();
+    return () => {
+      clearTimers();
+      abortRef.current?.abort();
+    };
   }, [clearTimers]);
 
   useEffect(() => {
@@ -131,21 +141,81 @@ export function Terminal() {
     schedule(() => addLog('CRB', 'crbVirtualAccount'), 900);
   };
 
-  const beginPayment = () => {
-    addLog('MCP', 'mcpExecutePayment');
-    schedule(() => addLog('CRB', 'crbClearing'), 350);
-    schedule(() => {
-      addLog('CRB', 'crbPaid', { txId: demoConfig.txId });
-      addLog('MCP', 'mcpOnchain');
-      addLog('AGENT', 'agentSettling');
-      setOverlay(null);
-      setStage('settlement');
-      setSettled(false);
-      schedule(() => {
-        setSettled(true);
-        addLog('OK', 'delivered', { wallet: demoConfig.wallets[intent.wallet] });
-      }, timing.settle);
-    }, timing.payment);
+  const beginPayment = (nextOrder: Order) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const token = runId.current;
+    const walletAddress = demoConfig.wallets[intent.wallet];
+
+    if (!mcpTransportRef.current) {
+      mcpTransportRef.current = createRuntimeMcpTransport();
+    }
+
+    const context: SettlementContext = {
+      orderId: demoConfig.orderRef,
+      assetId: nextOrder.asset.code,
+      amount: nextOrder.amount,
+      rwaAmount: nextOrder.quantity,
+      payeeAccount: demoConfig.payeeAccount,
+      walletAddress,
+    };
+
+    const onEvent = (event: AgentEvent) => {
+      if (token !== runId.current) return;
+
+      switch (event.type) {
+        case 'plan_ready':
+          addLog('AGENT', 'agentPlan', {
+            source: event.source === 'llm' ? 'LLM' : 'policy',
+            count: event.toolCount,
+          });
+          break;
+        case 'tool_start':
+          if (event.tool === 'execute_crb_payment') addLog('MCP', 'mcpExecutePayment');
+          else if (event.tool === 'verify_crb_settlement') addLog('MCP', 'mcpVerifySettlement');
+          else addLog('MCP', 'mcpOnchain');
+          break;
+        case 'clearing':
+          addLog('CRB', 'crbClearing');
+          break;
+        case 'paid':
+          addLog('CRB', 'crbPaid', { txId: event.txId });
+          break;
+        case 'settlement_started':
+          addLog('AGENT', 'agentSettling');
+          setOverlay(null);
+          setStage('settlement');
+          setSettled(false);
+          break;
+        case 'settled':
+          setSettled(true);
+          addLog('OK', 'delivered', { wallet: walletAddress });
+          break;
+        case 'failed':
+          addLog('WARN', 'mcpError', {
+            tool: event.tool ?? 'settlement',
+            error: event.error,
+          });
+          break;
+        default:
+          break;
+      }
+    };
+
+    void runSettlement({
+      context,
+      transport: mcpTransportRef.current,
+      onEvent,
+      signal: controller.signal,
+      delays: {
+        clearing: timing.clearing,
+        payment: timing.payment,
+        settle: timing.settle,
+      },
+    }).finally(() => {
+      if (abortRef.current === controller) abortRef.current = null;
+    });
   };
 
   const runStrategy = (nextOrder: Order) => {
@@ -175,7 +245,7 @@ export function Terminal() {
       } else {
         setOverlay('payment');
         addLog('AGENT', 'agentPayment');
-        beginPayment();
+        beginPayment(nextOrder);
       }
     }, timing.evaluate + timing.choose);
   };
@@ -202,7 +272,7 @@ export function Terminal() {
     addLog('OK', 'userApproved');
     addLog('AGENT', 'agentPayment');
     setOverlay('payment');
-    beginPayment();
+    beginPayment(order);
   };
 
   const handleReject = () => {
@@ -210,23 +280,46 @@ export function Terminal() {
     setOverlay('rejected');
   };
 
-  const handleConfirmReceipt = () => {
-    if (!order || !settled) return;
+  const handleConfirmReceipt = async () => {
+    if (!order || !settled || receiptBusyRef.current) return;
+    receiptBusyRef.current = true;
+    const token = runId.current;
     addLog('OK', 'userReceipt');
-    addLog('SYS', 'closed');
-    setReceipt({
-      order,
-      orderRef: demoConfig.orderRef,
-      txId: demoConfig.txId,
-      receiptHash: demoConfig.receiptHash,
-      completedAt: new Date(),
-      wallet: intent.wallet,
-    });
-    setStage('receipt');
+    addLog('MCP', 'mcpConfirmDelivery');
+
+    if (!mcpTransportRef.current) {
+      mcpTransportRef.current = createRuntimeMcpTransport();
+    }
+
+    try {
+      const result = await mcpTransportRef.current.callTool('confirm_delivery', {
+        order_id: demoConfig.orderRef,
+        receipt_hash: demoConfig.receiptHash,
+      });
+      if (token !== runId.current) return;
+      if (!result.ok) {
+        addLog('WARN', 'mcpError', { tool: 'confirm_delivery', error: result.error });
+        return;
+      }
+      addLog('SYS', 'closed');
+      setReceipt({
+        order,
+        orderRef: demoConfig.orderRef,
+        txId: demoConfig.txId,
+        receiptHash: demoConfig.receiptHash,
+        completedAt: new Date(),
+        wallet: intent.wallet,
+      });
+      setStage('receipt');
+    } finally {
+      receiptBusyRef.current = false;
+    }
   };
 
   const handleReset = () => {
     runId.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
     clearTimers();
     setStage('welcome');
     setIntentPhase('form');

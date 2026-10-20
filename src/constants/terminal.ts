@@ -83,6 +83,7 @@ export const demoConfig = {
   payee: 'EXIO Bank',
   payeeAccount: 'CRB •••• 3456',
   orderRef: 'NKA-ORD-2026-0842',
+  crbTxId: 'CRB-TX-2026-0842',
   txId: '0x8f9a…c41e',
   receiptHash: '0x7b21…9d8a',
   wallets: {
@@ -96,6 +97,7 @@ export const timing = {
   funding: 700,
   evaluate: 1700,
   choose: 1000,
+  clearing: 350,
   payment: 1900,
   settle: 5000,
 } as const;

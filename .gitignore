@@ -5,6 +5,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 next-env.d.ts
 
@@ -15,6 +16,7 @@ next-env.d.ts
 /coverage
 /playwright-report
 /test-results
+/.playwright-mcp/
 
 # misc
 .DS_Store

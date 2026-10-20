@@ -48,6 +48,7 @@ pnpm format
 ```text
 src/
   app/                 # layout, root page, globals.css, metadata routes
+  app/api/             # BFF-only routes (*.server.ts; dropped from the Pages export)
   components/
     terminal/          # state machine, steps, overlays, monitor, header, CTA
     react-bits/        # vendored registry components
@@ -56,6 +57,9 @@ src/
   constants/
     terminal.ts        # RWA data, demo orders, timings, validation, currency
     site.ts
+  lib/
+    agent/             # deterministic settlement policy, optional LLM planner, runner
+    mcp/               # MCP tool types, mock / BFF / HTTP transports
   i18n/
     messages.ts        # all EN/ZH UI + log + receipt copy
     locale-provider.tsx
@@ -68,11 +72,31 @@ e2e/                   # Playwright flows
 
 - `Terminal` owns `stage`, `intentPhase`, `order`, `overlay`, `settled`, `receipt`, and `logs`.
 - Delays use `schedule()` with a run token and a `timers` ref; `reset` and unmount clear timers.
+- Settlement is driven by `runSettlement()` with an `AbortController`; reset/unmount abort in-flight
+  MCP calls. MCP monitor entries come from agent events, not ad-hoc timers.
 - Log entries store a translation key + params, so changing language re-renders historical logs.
 - Demo choices:
   - large = 16 × U.S. Treasury Certificate 30D = $16,000 → approval
   - small = 10 × New Energy Plant Revenue Rights #07 = $6,000 → auto payment
 - Timings live in `src/constants/terminal.ts` (`timing`).
+
+## Agent & MCP
+
+- MCP tools use the PRD names in `src/lib/mcp/types.ts`: `setup_crb_funding`,
+  `check_crb_balance`, `create_trade_order`, `execute_crb_payment`, `reject_payment`,
+  `verify_crb_settlement`, `execute_onchain_settlement`, `confirm_delivery`.
+- Settlement auto-calls `execute_crb_payment` → `verify_crb_settlement` →
+  `execute_onchain_settlement`; receipt confirmation calls `confirm_delivery`.
+- BFF routes are `src/app/api/**/route.server.ts`: `/api/agent/plan` (deterministic policy +
+  optional LLM planner) and `/api/mcp/tool` (MCP facade). The `.server.ts` extension plus
+  `pageExtensions` in `next.config.ts` keeps them out of the Pages static export.
+- Runtime transport: `NEXT_PUBLIC_BFF_ENABLED=true` calls the BFF; static Pages builds use the
+  in-browser mock. Set `MCP_SERVER_URL` / `MCP_SERVER_TOKEN` on the server to forward to the real
+  backend MCP without changing the browser.
+- The LLM planner is optional (`AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL`,
+  `AGENT_LLM_TIMEOUT_MS`). Without a key the deterministic plan runs. LLM output is rejected
+  unless the order, payee, amount and wallet match the authorized intent exactly.
+- These secrets are server-only; never expose them through `NEXT_PUBLIC_*`.
 
 ## Design System
 
@@ -108,8 +132,10 @@ e2e/                   # Playwright flows
 ## Deployment
 
 - GitHub Pages: `GITHUB_PAGES=true` static export with base path `/payfi-marketing`.
+- The Pages build drops every `route.server.ts` BFF route; the browser falls back to the mock MCP
+  and deterministic plan. Node deployments keep the BFF and can forward to the real MCP.
 - Workflow: `.github/workflows/deploy-pages.yml`; it also calls the Pages API to keep the source
   on GitHub Actions.
-- Page title: `RWA Agent`; package name: `agentic-payment-fe`.
+- Page title: `Agentic Payment`; package name: `agentic-payment-fe`.
 - A custom domain would require removing the base path and adding the CNAME; do not do this unless
   asked.

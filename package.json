@@ -2,9 +2,9 @@
   "name": "agentic-payment-fe",
   "version": "0.1.0",
   "private": true,
-  "description": "Naka RWA Agent \u2014 agentic RWA payment terminal demo with mocked bank and settlement APIs",
+  "description": "Agentic Payment \u2014 agentic RWA payment terminal demo with mocked bank and settlement APIs",
   "scripts": {
-    "dev": "next dev -p 3005",
+    "dev": "NEXT_DIST_DIR=.next-dev next dev -p 3005",
     "build": "next build",
     "start": "next start -p 3005",
     "lint": "eslint",

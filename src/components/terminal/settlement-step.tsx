@@ -20,7 +20,8 @@ export function SettlementStep({
 }) {
   const { t, locale } = useI18n();
   const copy = t.settlement;
-  const walletLabel = t.intent.wallets.find((item) => item.value === wallet)?.label ?? '';
+  const walletOption = t.intent.wallets.find((item) => item.value === wallet);
+  const walletLabel = walletOption ? `${walletOption.address} · ${walletOption.name}` : '';
   const assetName = t.assets[order.asset.id].name;
 
   const steps = [

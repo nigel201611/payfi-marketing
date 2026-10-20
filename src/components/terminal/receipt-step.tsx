@@ -11,8 +11,8 @@ export function ReceiptStep({ receipt, onReset }: { receipt: ReceiptData; onRese
   const { t, locale } = useI18n();
   const copy = t.settlement;
   const assetName = t.assets[receipt.order.asset.id].name;
-  const walletLabel =
-    t.intent.wallets.find((item) => item.value === receipt.wallet)?.label ?? receipt.wallet;
+  const wallet = t.intent.wallets.find((item) => item.value === receipt.wallet);
+  const walletLabel = wallet ? `${wallet.address} · ${wallet.name}` : receipt.wallet;
   const completedAt = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',

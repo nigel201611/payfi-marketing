@@ -26,7 +26,7 @@ const manrope = Manrope({
 
 const pagesBasePath = process.env.GITHUB_PAGES === 'true' ? '/payfi-marketing' : '';
 const siteUrl = site.url.replace(/\/$/, '');
-const title = 'RWA Agent';
+const title = 'Agentic Payment';
 const description =
   'Roadshow sandbox for agentic RWA purchases: client intent, CRB fiat funding, agent-driven orders, human approval, and on-chain settlement. Mock data only.';
 

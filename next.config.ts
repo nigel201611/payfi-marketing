@@ -16,6 +16,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Keep dev output out of .next so a build (e.g. the pre-push hook) cannot
+  // corrupt a running dev server's Turbopack cache.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+  // BFF-only routes use the .server.ts extension. The Pages static export drops
+  // them from the route table so `output: 'export'` stays buildable.
+  pageExtensions: isGithubPages
+    ? ['tsx', 'ts', 'jsx', 'js']
+    : ['server.ts', 'tsx', 'ts', 'jsx', 'js'],
+  env: {
+    NEXT_PUBLIC_BFF_ENABLED: isGithubPages ? 'false' : 'true',
+  },
   // GitHub Pages serves static files only; the regular Node deployment stays standalone.
   output: isGithubPages ? 'export' : 'standalone',
   basePath: isGithubPages ? pagesBasePath : undefined,

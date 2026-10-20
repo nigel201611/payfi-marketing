@@ -18,7 +18,7 @@ export function TerminalHeader({ canReset, onReset }: { canReset: boolean; onRes
           <div className="mx-auto flex h-full w-full max-w-[940px] items-center gap-3 px-5 sm:px-8 lg:px-12">
             <Link
               href="/"
-              aria-label="EX.IO Naka RWA Agent — home"
+              aria-label="EX.IO Agentic Payment — home"
               className="flex shrink-0 items-center gap-3"
             >
               <ExioLogo className="text-foreground h-[22px]" />
