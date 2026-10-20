@@ -12,7 +12,7 @@ import {
 
 export type Theme = 'dark' | 'light';
 
-const STORAGE_KEY = 'exio-theme';
+const STORAGE_KEY = 'naka-theme';
 const listeners = new Set<() => void>();
 let cachedTheme: Theme | null = null;
 

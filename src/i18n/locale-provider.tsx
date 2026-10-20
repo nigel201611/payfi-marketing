@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { messages, type Locale, type Messages } from './messages';
 
-const STORAGE_KEY = 'exio-locale';
+const STORAGE_KEY = 'naka-locale';
 const listeners = new Set<() => void>();
 let cachedLocale: Locale | null = null;
 

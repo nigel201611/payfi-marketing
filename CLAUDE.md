@@ -1,128 +1,114 @@
-# payfi-marketing — EX.IO Agent Wallet (Roadshow Concept)
+# naka-rwa-agent — RWA Agentic Payment Terminal
 
-A Stripe-inspired marketing site for **EX.IO Agent Wallet**, a product concept in which AI agents
-can spend on a user's behalf with approvals, scoped permissions, and a full audit trail.
+A bilingual roadshow demo for compliant RWA purchases made by an AI agent. The product is
+“Naka RWA Agent”; the browser title is **RWA Agent**.
 
-> **Reference inputs**
-> - Visual/UX reference: [stripe.com](https://stripe.com) — layout, typography, bento cards, developer section.
-> - Roadshow benchmark: [link.com/en-sg/agents](https://link.com/en-sg/agents) — agent payments narrative.
-> - Brand: [dev.exiovara.com/en](https://dev.exiovara.com/en) — EX.IO logo, Manrope/Geist type, mint-green palette.
-> - Engineering conventions: `../exio-payfi-fe` (Next.js 16, TS strict, ESLint/Prettier, Vitest, Playwright, Husky).
->
-> **Content is illustrative.** PRDs are still being finalised; keep copy, metrics, logos, and mock
-> integrations in typed constants (`src/constants/`) so they can be swapped without touching layout.
->
-> **Scope:** the [Link Agents page](https://link.com/en-sg/agents) is the reference for UI, interactions,
-> and feature scope. Do not build the broader Stripe homepage feature set (pricing, multi-product
-> navigation, security/data dashboards, etc.) until the PRD asks for it.
+> **References**
+> - Product PRD: `docs/agentic-payment-prd.md`
+> - UI prototype: https://6klwjyb3jee3c.ok.kimi.link/
+> - Design continuity: the earlier EX.IO / Stripe-inspired dark-light system in this repo
+> - Repo/Pages name: `payfi-marketing` (kept so the existing Pages URL and base path remain stable)
 
-## Tech Stack
+## Product Flow
 
-- **Framework**: Next.js 16 (App Router) + React 19
-- **Language**: TypeScript strict
-- **Styling**: Tailwind CSS v4 (`@theme` tokens in `src/app/globals.css`)
-- **UI skeleton**: shadcn/ui (Button, Dialog, Sheet, Tabs, Input, Tooltip…)
-- **Motion**: React Bits components (`src/components/react-bits/`) + `motion` + GSAP
-- **Theme**: persisted dark / light via `data-theme` + semantic CSS tokens
-- **i18n**: persisted English / 简体中文 via `src/i18n/messages.ts` + `useI18n()`
-- **Tests**: Vitest (unit), Playwright (E2E)
-- **Lint/format**: ESLint 9 + Prettier (+ Tailwind class sorting)
-- **Package manager**: pnpm (`.npmrc` pins a fast npm mirror for this environment)
+Welcome/KYC → intent authorization & virtual-account funding → agent scans RWA assets and creates an
+order → small payment auto-pays / large payment blocks for human approval → mocked CRB clearing →
+mock on-chain RWA settlement → receipt and reset. The right Agent Monitor streams mock
+`MCP`/`CRB`/`WEBHOOK` activity.
+
+**All bank, MCP, PayFi, and RWA settlement APIs are mocked in the browser.** No real funds or bank
+API are used. Keep the visible “Mock Data Only / mock runtime” labels.
+
+## Stack
+
+- Next.js 16 (App Router), React 19, TypeScript strict
+- Tailwind CSS v4; semantic dark/light tokens in `src/app/globals.css`
+- shadcn/ui primitives available; React Bits for `StarBorder`, `Magnet`, `CountUp`
+- `motion` for stage transitions
+- Vitest + Testing Library; Playwright desktop/mobile
+- ESLint 9, Prettier, Husky/lint-staged
+- pnpm; GitHub Pages static export via `.github/workflows/deploy-pages.yml`
 
 ## Commands
 
 ```bash
 pnpm dev          # http://localhost:3005
-pnpm build        # production build
-pnpm lint         # eslint
-pnpm type-check   # tsc --noEmit
-pnpm test         # vitest run
-pnpm test:e2e     # playwright (desktop + mobile)
-pnpm format       # prettier
+pnpm build        # standalone build
+pnpm build:pages  # static export + /payfi-marketing base path
+pnpm lint
+pnpm type-check
+pnpm test         # Vitest
+pnpm test:e2e     # Playwright
+pnpm format
 ```
 
-## Brand System
-
-| Token | Value | Use |
-| --- | --- | --- |
-| `brand` | `#00DD95` | Primary CTAs, accents, focus |
-| `brand-strong` | `#00AB73` | Pressed / saturated accents |
-| `brand-ink` | `#007A52` | Small text on light surfaces (AA) |
-| `brand-soft` | `#69FFCE` | Gradient start, glows |
-| `ink` | `#080A09` | Neutral dark canvas / fixed dark panels |
-| `accent-text` | adaptive | `#00DD95` on dark, `#007A52` on light |
-| `surface` | `#0A2017` | Cards on dark |
-| `paper` | `#F5F8F6` | Light sections |
-
-- Fonts: **Manrope** for display headings (`font-display`), **Geist** for body (`font-sans`),
-  **Geist Mono** for code (`font-mono`), loaded through `next/font`.
-- Prefer Tailwind theme tokens (`bg-brand`, `text-muted-foreground`, `bg-surface`, `text-gradient`)
-  and CSS variables over raw hex values in components.
-- The only exceptions for raw color literals are `globals.css`, SVG brand assets, generated
-  OG images (`src/app/opengraph-image.tsx`), and React Bits visual-effect components
-  (WebGL/shader strings). Decorative glows/shadows may use `rgba()` values; core text, surface,
-  border and accent colors must use theme tokens.
-
-## Project Structure
+## Structure
 
 ```text
 src/
-  app/                 # App Router entry, global CSS, metadata
+  app/                 # layout, root page, globals.css, metadata routes
   components/
-    react-bits/        # Components pulled from the official React Bits registry
-    ui/                # shadcn/ui primitives
-    brand/             # EX.IO logo & brand marks
-    layout/            # Header, footer, containers, section shell
-    sections/          # Page sections (hero, how-it-works, control, developers…)
-    demo/              # Interactive product mocks (wallet, approval flow)
-  constants/           # Shared demo data + code samples
-  i18n/                # en/zh dictionaries + locale provider
-  components/providers # Theme + locale providers
-  hooks/               # Reusable client hooks
-  lib/                 # utils (cn), formatting helpers
-__tests__/             # Vitest unit tests (mirrors src/)
-e2e/                   # Playwright specs
-public/                # Static assets
+    terminal/          # state machine, steps, overlays, monitor, header, CTA
+    react-bits/        # vendored registry components
+    providers/         # ThemeProvider + LocaleProvider
+    ui/                # shadcn/ui primitives + restored ThemeToggle
+  constants/
+    terminal.ts        # RWA data, demo orders, timings, validation, currency
+    site.ts
+  i18n/
+    messages.ts        # all EN/ZH UI + log + receipt copy
+    locale-provider.tsx
+docs/                  # PRD and product documentation
+__tests__/             # Vitest (helpers + dictionary parity)
+e2e/                   # Playwright flows
 ```
 
-## Conventions
+## State & Timers
 
-### Components & rendering
-- Server components by default; add `'use client'` only for interactivity (state, refs, animations).
-- Keep section components composed from small local parts; put replaceable copy in `src/constants/`.
-- shadcn/ui is the functional skeleton (dialogs, tabs, sheets). React Bits is the motion layer.
-- Do not rewrite React Bits internals unless fixing a bug; note changes in the component header.
-- All interactive controls must be keyboard reachable and have visible focus states.
+- `Terminal` owns `stage`, `intentPhase`, `order`, `overlay`, `settled`, `receipt`, and `logs`.
+- Delays use `schedule()` with a run token and a `timers` ref; `reset` and unmount clear timers.
+- Log entries store a translation key + params, so changing language re-renders historical logs.
+- Demo choices:
+  - large = 16 × U.S. Treasury Certificate 30D = $16,000 → approval
+  - small = 10 × New Energy Plant Revenue Rights #07 = $6,000 → auto payment
+- Timings live in `src/constants/terminal.ts` (`timing`).
 
-### Styling & theming
-- Tailwind utilities + theme tokens only; avoid arbitrary hex values.
-- Keep the canvas neutral: near-black graphite (dark) / off-white (light). EX.IO green is an accent
-  for CTAs, charts, glows and links — do not wash the page background in green/teal.
-- Test every visual change in **both** `data-theme` modes. Fixed product surfaces (wallet mock,
-  approval demo, code window, CTA panel) stay dark in both themes; page sections follow tokens.
-- Dark product panels use explicit white/alpha text classes, never `text-foreground` (which flips).
-- Respect `prefers-reduced-motion` (globals.css already collapses CSS animation; JS effects should
-  stay decorative and non-blocking).
-- Every section must work at 390 px, 768 px and 1440 px widths.
-- Marketing pages should stay readable without the animations (progressive enhancement).
+## Design System
 
-### Content & claims
-- This is a concept demo: keep the footer disclaimer and avoid implying real regulatory licences,
-  live availability, real partners, or real customer endorsements.
-- Customer names, logos, metrics, and agent integrations are fictional placeholders.
-- Use EX.IO wording from `dev.exiovara.com` where applicable ("Licensing underway", "OTC desk", etc.);
-  otherwise write product copy in `src/constants/`.
+- Fonts: Manrope display, Geist body, Geist Mono terminal logs.
+- Dark/light themes; default dark. Persist theme (`naka-theme`) and locale (`naka-locale`) in
+  `localStorage`; init before paint in `layout.tsx`.
+- Left workspace uses `bg-workspace` / `bg-workspace-card`; right Agent Monitor is fixed
+  `#050706` in both themes to keep a clear information-vs-terminal split.
+- Green (`brand`) is an accent, not a background wash. Avoid cyan/teal background fields.
+- The welcome copy uses staggered `animate-hero-in`; the primary CTA uses React Bits StarBorder +
+  a bounded Magnet (max offset 8px) + a sheen; keep the CTA click target stable.
+- The previous EX.IO favicon (`public/icon.png`) is intentionally retained.
 
-### Deployment
-- GitHub Pages uses `GITHUB_PAGES=true pnpm build` (static export, base path `/payfi-marketing`)
-  via `.github/workflows/deploy-pages.yml`. Keep `next.config.ts` base path and the workflow's
-  `NEXT_PUBLIC_SITE_URL` in sync with the repository name.
-- Public assets referenced in metadata must be prefixed with `pagesBasePath` (see `layout.tsx`).
-- Normal hosting keeps `output: 'standalone'`.
+## Content & i18n
 
-### Testing & quality gates
-- Unit tests: `__tests__/` with Testing Library; E2E: `e2e/`.
-- Before commit: `pnpm lint`, `pnpm type-check`, `pnpm test`; before push: `pnpm build` (Husky).
-- Run `/review-ui` on the working diff before committing.
-- Verify visual changes with Playwright screenshots at desktop + mobile and check console errors.
-- No `console.log` / `debugger` in committed code.
+- **All user-visible copy lives in `src/i18n/messages.ts`**; update `en` and `zh` together. The
+  unit test enforces structural parity. Do not hardcode product copy in JSX.
+- Use `useI18n().t` and `formatMessage` for templates; currency with `formatCurrency` from
+  `constants/terminal.ts`.
+- Keep the Naka client identity, CI/BR numbers, RWA asset values, and mock routing/account numbers
+  consistent with the PRD/prototype unless the PRD changes.
+
+## Quality Gates
+
+- Run `pnpm lint`, `pnpm type-check`, `pnpm test`, and `pnpm test:e2e` before finishing.
+- Full-flow E2E covers large/approval and small/auto paths plus rejection, language/theme
+  persistence, and mobile overflow.
+- Test both themes and both locales when changing layout or copy.
+- Verify at 1440 and 1920 widths; the roadshow target is a large screen.
+- Run `/review-ui` on the working diff; use `/visual-qa` for screenshots.
+- Do not commit unless the user asks. No `console.log`/`debugger`.
+
+## Deployment
+
+- GitHub Pages: `GITHUB_PAGES=true` static export with base path `/payfi-marketing`.
+- Workflow: `.github/workflows/deploy-pages.yml`; it also calls the Pages API to keep the source
+  on GitHub Actions.
+- Page title: `RWA Agent`; package name: `naka-rwa-agent`.
+- A custom domain would require removing the base path and adding the CNAME; do not do this unless
+  asked.

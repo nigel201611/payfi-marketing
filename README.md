@@ -1,154 +1,127 @@
-# payfi-marketing
+# Naka RWA Agent — Agentic Payment Terminal
 
-Roadshow marketing site for **EX.IO Agent Wallet** — “Give your agent a wallet you control.”
+A bilingual, full-screen roadshow demo for compliant RWA purchases made by an AI agent.
 
-Built with the visual language of [Stripe](https://stripe.com), the agent-payments narrative of
-[Link Agents](https://link.com/en-sg/agents), and the EX.IO brand from
-[dev.exiovara.com](https://dev.exiovara.com/en). Motion and background effects come from the
-[React Bits](https://www.reactbits.dev) registry; functional primitives come from
-[shadcn/ui](https://ui.shadcn.com).
+The terminal follows the product flow in [`docs/agentic-payment-prd.md`](docs/agentic-payment-prd.md)
+and the visual/UX reference at <https://6klwjyb3jee3c.ok.kimi.link/>:
 
-> This is a concept experience. Product copy, metrics, customers, and integrations are
-> illustrative. The product PRD is still in progress, so all copy lives in typed constants under
-> `src/constants/` for easy replacement.
->
-> **Scope mirrors the [Link Agents page](https://link.com/en-sg/agents):** agent payments with
-> approvals, full purchase history, spending insights, recommendations, quickstart + supported
-> surfaces, and coming-soon items. Broader platform features (pricing, trading, security dashboards,
-> etc.) are intentionally out of scope until the PRD asks for them.
+```text
+Welcome / KYC
+  → Intent authorization & virtual-account funding
+  → Agent scans RWA assets and creates an order
+      ├─ small amount: automatic payment
+      └─ large amount: blocking human approval
+  → CRB fiat clearing → on-chain RWA settlement
+  → delivery receipt + demo reset
+```
+
+The right-hand **Agent Monitor** streams the mock MCP / CRB / webhook activity in real time. All
+banking, MCP, PayFi and RWA settlement calls are mocked in the browser — no funds move and no
+real bank API is called.
+
+> Live demo: **https://nigel201611.github.io/payfi-marketing/**  
+> The browser tab title is **RWA Agent**. The GitHub repository is still named
+> `payfi-marketing` so the existing Pages URL remains stable.
 
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript strict
-- Tailwind CSS v4 with EX.IO design tokens (`src/app/globals.css`)
-- React Bits components (`src/components/react-bits/`) for motion, WebGL, and interactions
-- shadcn/ui (`src/components/ui/`) for the functional skeleton
-- Bilingual copy (English / 简体中文) and persisted dark / light themes
-- Vitest + Testing Library (unit), Playwright (E2E)
-- ESLint 9 + Prettier + Husky/lint-staged
+- Tailwind CSS v4 with the existing dark / light brand tokens
+- React Bits for the primary CTA (`StarBorder`, `Magnet`) and numeric animation (`CountUp`)
+- shadcn/ui primitives available for future screens
+- Bilingual copy (English / 简体中文) and persisted themes
+- Vitest + Testing Library (unit), Playwright (desktop + mobile)
+- GitHub Pages static export via GitHub Actions
 
-## Getting started
+## Run
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:3005
+pnpm dev            # http://localhost:3005
 ```
 
-> The dev server uses port **3005** to avoid clashing with the PayFi admin frontend on 3000/3001.
-> `.npmrc` pins `registry.npmmirror.com` for fast installs in this environment; delete it to use
-> the default npm registry. Set `NEXT_PUBLIC_SITE_URL` for canonical/OG metadata in a real deploy.
+The demo defaults to dark mode. Use the header controls to switch theme and language; the
+preferences are stored in `localStorage`.
 
-### Scripts
+### Tests & build
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Start the dev server on port 3005 |
-| `pnpm build` | Production build |
-| `pnpm start` | Serve the production build on port 3005 |
-| `pnpm lint` | ESLint |
-| `pnpm type-check` | TypeScript |
-| `pnpm test` | Vitest unit tests |
-| `pnpm test:e2e` | Playwright (desktop + mobile) |
-| `pnpm format` | Prettier |
+```bash
+pnpm lint
+pnpm type-check
+pnpm test           # helpers + EN/ZH dictionary parity
+pnpm test:e2e       # both payment paths, approval rejection, theme/language persistence, mobile
+pnpm build          # Node standalone build
+pnpm build:pages    # static export under /payfi-marketing for GitHub Pages
+```
 
-## Structure
+## Project Structure
 
 ```text
 src/
-  app/                 # App Router entry, metadata, OG image, robots, sitemap
+  app/
+    layout.tsx          # fonts, providers, metadata, theme/locale init
+    page.tsx            # renders <Terminal />
+    globals.css         # brand tokens, theme variables, terminal animations
   components/
-    react-bits/        # Components from the official React Bits registry
-    ui/                # shadcn/ui primitives + brand buttons/waitlist
-    brand/             # EX.IO wordmark
-    layout/            # Header, footer, container
-    sections/          # Page sections
-    demo/              # Agent wallet dashboard + interactive approval demo
-    developers/        # Code tabs
-    motion/            # Reveal wrapper (React Bits AnimatedContent)
-  constants/           # Shared demo data + code samples
-  i18n/                # English/Chinese dictionaries + locale provider
-  components/providers # Theme + locale providers
-__tests__/             # Unit tests
-e2e/                   # Playwright specs
-scripts/visual-qa.mjs  # Screenshot + console QA helper
+    terminal/
+      terminal.tsx      # state machine, timers, logs, split layout
+      terminal-header.tsx
+      welcome-step.tsx
+      intent-step.tsx   # authorization form + funding instructions
+      strategy-step.tsx # RWA asset selection
+      settlement-step.tsx
+      receipt-step.tsx
+      overlays.tsx      # approval / auto-payment / rejection
+      agent-monitor.tsx # right-hand live log terminal
+      animated-cta.tsx  # StarBorder + subtle Magnet
+    react-bits/         # vendored React Bits components
+    providers/          # theme + locale providers
+    ui/                 # shadcn/ui primitives and theme toggle
+  constants/
+    terminal.ts         # RWA mock data, timings, validation, currency formatting
+    site.ts
+  i18n/
+    messages.ts         # all visible copy in EN and 中文
+    locale-provider.tsx
+docs/
+  agentic-payment-prd.md
 ```
 
-## Design tokens
+## Mock Data
 
-| Token | Value | Usage |
-| --- | --- | --- |
-| `brand` | `#00DD95` | Primary accents, CTAs |
-| `brand-ink` | `#007A52` | Text on light surfaces (AA contrast) |
-| `brand-soft` | `#69FFCE` | Gradient highlights |
-| `ink` | `#04110C` | Dark canvas |
-| `paper` | `#F5F8F6` | Light sections |
+| Item | Value |
+| --- | --- |
+| Demo client | Naka Financial Technologies Ltd. (pre-seeded KYC) |
+| Single-transaction limit | $10,000 |
+| Max budget / available funds | $100,000 (editable) |
+| Large demo order | 16 × U.S. Treasury Short-Term Certificate 30D → $16,000 → human approval |
+| Small demo order | 10 × New Energy Plant Revenue Rights #07 → $6,000 → auto payment |
+| Payee | EXIO Bank · CRB •••• 3456 |
+| Settlement | mocked CRB clearing + mock on-chain RWA delivery |
 
-Typography: **Manrope** (display), **Geist** (body), **Geist Mono** (code).
+The state machine lives in `src/components/terminal/terminal.tsx`. All delayed agent activity uses
+cleared timers and a run token, so resetting or unmounting cannot leak callbacks. All copy is in
+`src/i18n/messages.ts`; add new keys to **both** `en` and `zh`.
 
-The canvas is intentionally neutral: near-black graphite in dark mode and off-white in light mode.
-EX.IO green is reserved for accents, charts, CTAs, and glows — avoid colour-washing the page background.
+## Design
 
-## Theme & language
+The previous EX.IO / Stripe-inspired visual system is retained:
 
-- Theme: `<html data-theme="dark|light">`; toggle in the header or mobile sheet. Choice persists in
-  `localStorage` (`exio-theme`) and is applied before paint by an inline script.
-- Language: English / 简体中文; toggle shows the target language flag (CN / UK). Choice persists in
-  `localStorage` (`exio-locale`), updates `<html lang>`, and swaps all copy from
-  `src/i18n/messages.ts`.
-- Add new copy to **both** dictionaries (`en` and `zh`) and consume it with `useI18n().t`.
-- Fixed product surfaces (wallet dashboard, approval demo, code window, CTA panel) stay dark in
-  both themes; the rest of the page follows semantic tokens.
+- Manrope display type, Geist body, Geist Mono logs
+- Graphite dark theme / off-white light theme; EX.IO green accents
+- Left business workspace uses `--workspace` / `--workspace-card`; the right Agent Monitor stays
+  near-black in both themes for a clear information/terminal split
+- The primary launch CTA keeps the React Bits StarBorder light, a subtle bounded magnet
+  (max 8px), and a light sweep; the welcome copy fades/blurs in with a stagger
+- The EX.IO favicon from `public/icon.png` is retained as requested; the page title is “RWA Agent”
 
-## React Bits registry
+## GitHub Pages
 
-`components.json` is configured with the React Bits shadcn registry:
+The workflow `.github/workflows/deploy-pages.yml` exports the static site under the
+`/payfi-marketing` base path and deploys it on every push to `main`.
 
-```json
-"registries": { "@react-bits": "https://reactbits.dev/r/{name}.json" }
-```
-
-Add more components with:
-
-```bash
-pnpm dlx shadcn@latest add @react-bits/<ComponentName>-TS-TW
-```
-
-Used on the page: Aurora, BlurText, ClickSpark, Magnet, Orb, ShinyText, SpotlightCard, StarBorder,
-AnimatedContent. Also vendored for future sections: CountUp, LogoLoop, ScrollVelocity, TiltedCard.
-
-## Troubleshooting
-
-### MetaMask “Failed to connect to MetaMask” dev overlay
-
-This site has **no wallet or Web3 integration** (no `window.ethereum`, wagmi, ethers, or MetaMask
-SDK). The error is thrown by MetaMask's own injected `inpage.js` when the extension cannot restore
-its session. Next.js surfaces any uncaught page error in the development overlay, including ones
-originating from browser extensions.
-
-`src/app/layout.tsx` installs a **development-only** filter that suppresses uncaught errors whose
-stack originates from `chrome-extension://…` and mentions MetaMask/Ethereum. Normal application
-errors still reach the overlay, and production builds do not include the filter.
-
-If the overlay still appears, reload the tab, restart/update MetaMask, disable it for `localhost`,
-or use a clean Chrome profile. The application itself does not depend on MetaMask.
-
-## Quality gates
-
-```bash
-pnpm type-check && pnpm lint && pnpm test && pnpm build
-```
-
-Claude Code helpers live in `.claude/` — `/review-ui` for UI standards, `/visual-qa` for
-screenshot-driven visual checks, and `/commit` for commit messages. `.mcp.json` configures the
-Playwright MCP server for interactive inspection.
-
-## GitHub Pages demo
-
-The static demo deploys from `.github/workflows/deploy-pages.yml` on every push to `main`:
-
-- URL: **https://nigel201611.github.io/payfi-marketing/**
-- One-time repository setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-- Build locally with `pnpm build:pages` (enables static export + the `/payfi-marketing` base path),
-  then serve the generated `out/` directory under that path.
-- The regular `pnpm build` remains a Node standalone build for non-Pages hosting. The base path and
-  repository name live in `next.config.ts`; update both if the repository is renamed.
+- Build locally with `pnpm build:pages`.
+- Repository setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- The workflow also calls the Pages API to ensure the GitHub Actions source; it is idempotent.
+- Update `basePath` and `NEXT_PUBLIC_SITE_URL` if the repository is renamed or a custom domain is
+  attached.

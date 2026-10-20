@@ -1,12 +1,7 @@
 export const site = {
-  name: 'EX.IO',
-  product: 'Agent Wallet',
-  beta: 'Private beta',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ex.io',
-  external: {
-    business: 'https://www.ex.io/',
-    signIn: 'https://www.ex.io/zh/login',
-    exio: 'https://www.ex.io',
-    trade: 'https://www.ex.io/zh/trade/',
-  },
+  name: 'Naka RWA Agent',
+  shortName: 'Naka',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.ex.io',
+  description:
+    'Agentic payment terminal for tokenized real-world assets — intent authorization, bank-grade fiat funding, agent-driven settlement, and a full audit trail. Mock demo environment.',
 } as const;
