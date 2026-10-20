@@ -22,7 +22,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # NEXT_PUBLIC_* values are inlined at build time; server-only secrets
-# (AGENT_LLM_*, MCP_SERVER_*) must be injected at runtime instead.
+# (AGENT_LLM_*, MCP_CRB_*, MCP_RWA_*) must be injected at runtime instead.
 ARG NEXT_PUBLIC_SITE_URL=https://www.ex.io
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 

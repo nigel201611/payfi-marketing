@@ -21,10 +21,11 @@ Browser
   ├─ 确定性策略（默认）/ 可选 LLM planner
   ├─ /api/agent/plan        → BFF：LLM 生成计划 + 确定性校验
   └─ /api/mcp/tool          → BFF：MCP facade
-                                 ├─ 未配置 MCP_SERVER_URL：进程内 mock
-                                 └─ 已配置：JSON-RPC tools/call → 后端 MCP
+                                 ├─ CRB MCP：funding / payment / verification
+                                 └─ RWA MCP：order / on-chain / delivery
 ```
 
+两个后端 MCP 可独立配置：某个 server 的 URL 为空时，该 server 自动使用进程内 mock。
 静态 Pages 构建会通过 `pageExtensions` 自动剔除所有 `route.server.ts`，
 浏览器回退到内置 mock MCP 与确定性计划，因此 Pages 上不需要任何密钥。
 
@@ -68,10 +69,12 @@ Browser
 
 ### 3.3 MCP 变量（仅服务端）
 
-| 变量               | 必填 | 默认值 | 说明                                          |
-| ------------------ | ---- | ------ | --------------------------------------------- |
-| `MCP_SERVER_URL`   | 否   | 空     | 后端 MCP JSON-RPC 地址；为空时使用进程内 mock |
-| `MCP_SERVER_TOKEN` | 否   | 空     | 以 `Authorization: Bearer <token>` 发送       |
+| 变量                   | 必填 | 默认值 | 说明                                             |
+| ---------------------- | ---- | ------ | ------------------------------------------------ |
+| `MCP_CRB_SERVER_URL`   | 否   | 空     | CRB MCP JSON-RPC 地址；为空时该 server 使用 mock |
+| `MCP_CRB_SERVER_TOKEN` | 否   | 空     | CRB MCP Bearer Token                             |
+| `MCP_RWA_SERVER_URL`   | 否   | 空     | RWA MCP JSON-RPC 地址；为空时该 server 使用 mock |
+| `MCP_RWA_SERVER_TOKEN` | 否   | 空     | RWA MCP Bearer Token                             |
 
 ### 3.4 构建 / 测试变量
 
@@ -147,22 +150,37 @@ AGENT_LLM_PROTOCOL=chat-completions
 
 ## 5. MCP 配置
 
+系统对接两个独立的后端 MCP：
+
+| MCP     | 负责工具                                                                                                   |
+| ------- | ---------------------------------------------------------------------------------------------------------- |
+| CRB MCP | `setup_crb_funding`、`check_crb_balance`、`execute_crb_payment`、`reject_payment`、`verify_crb_settlement` |
+| RWA MCP | `create_trade_order`、`execute_onchain_settlement`、`confirm_delivery`                                     |
+
+路由表定义在 `src/lib/mcp/types.ts` 的 `mcpToolServer`。
+
 ### 5.1 Mock 模式（默认）
 
-不设置 `MCP_SERVER_URL` 时，BFF 使用进程内 mock transport：
+某个 server 未配置 URL 时，BFF 对该 server 使用进程内 mock transport：
 
 - 无需网络
 - 结算工具按固定节奏返回确定结果
 - 浏览器静态构建使用同一套 mock（运行在浏览器内）
+- CRB 与 RWA 可独立接入：例如只接 CRB，RWA 继续走 mock
 
 ### 5.2 连接真实后端 MCP
 
-设置：
-
 ```bash
-MCP_SERVER_URL=https://mcp.internal.example.com/mcp
-MCP_SERVER_TOKEN=***
+# CRB MCP
+MCP_CRB_SERVER_URL=https://mcp-crb.internal.example.com/mcp
+MCP_CRB_SERVER_TOKEN=***
+
+# RWA MCP
+MCP_RWA_SERVER_URL=https://mcp-rwa.internal.example.com/mcp
+MCP_RWA_SERVER_TOKEN=***
 ```
+
+两个地址可以分别配置，互不影响。
 
 请求格式（JSON-RPC 2.0）：
 
@@ -187,21 +205,27 @@ MCP_SERVER_TOKEN=***
 1. `result.structuredContent`
 2. `result.content` 中 `type=text` 的 JSON 文本
 
+BFF 响应会附带实际使用的 server：
+
+```json
+{ "ok": true, "output": { "...": "..." }, "server": "crb" }
+```
+
 当前 BFF 允许的工具白名单：
 
-- `execute_crb_payment`
-- `verify_crb_settlement`
-- `execute_onchain_settlement`
-- `confirm_delivery`
+- `execute_crb_payment`（CRB）
+- `verify_crb_settlement`（CRB）
+- `execute_onchain_settlement`（RWA）
+- `confirm_delivery`（RWA）
 
 其他工具会被拒绝（HTTP 400）。如需放开，修改 `src/lib/mcp/types.ts` 中的
 `bffToolNames`。
 
 超时与错误：
 
-- MCP 请求超时：15 秒
-- 后端失败或超时：HTTP 502，返回 `{ "ok": false, "error": "..." }`
-- 若后端 MCP 需要 session header 或 SSE 分帧，调整 `src/lib/mcp/http-transport.ts`
+- 每个 MCP 请求超时：15 秒
+- 后端失败或超时：HTTP 502，返回 `{ "ok": false, "error": "...", "server": "crb|rwa" }`
+- 若某个后端 MCP 需要 session header 或 SSE 分帧，调整 `src/lib/mcp/http-transport.ts`
 
 ## 6. 环境配置模板
 
@@ -215,9 +239,11 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3005
 AGENT_LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=sk-***
 
-# 可选：连接本地/联调 MCP；不填则使用 mock
-MCP_SERVER_URL=
-MCP_SERVER_TOKEN=
+# 可选：连接本地/联调 MCP；对应 URL 不填则使用 mock
+MCP_CRB_SERVER_URL=
+MCP_CRB_SERVER_TOKEN=
+MCP_RWA_SERVER_URL=
+MCP_RWA_SERVER_TOKEN=
 ```
 
 启动：
@@ -237,8 +263,10 @@ AGENT_LLM_PROVIDER=deepseek
 AGENT_LLM_API_KEY=***          # 或使用 provider 专属密钥
 AGENT_LLM_TIMEOUT_MS=4000
 
-MCP_SERVER_URL=https://mcp.internal.example.com/mcp
-MCP_SERVER_TOKEN=***
+MCP_CRB_SERVER_URL=https://mcp-crb.internal.example.com/mcp
+MCP_CRB_SERVER_TOKEN=***
+MCP_RWA_SERVER_URL=https://mcp-rwa.internal.example.com/mcp
+MCP_RWA_SERVER_TOKEN=***
 ```
 
 部署：
@@ -278,7 +306,7 @@ docker run --rm -p 3005:3005 \
 注意事项：
 
 - `NEXT_PUBLIC_SITE_URL` 是构建期变量，会被内联进前端包；修改后需重新构建镜像
-- `AGENT_LLM_*`、`MCP_SERVER_*` 等仅服务端变量在容器启动时注入，不需要重新构建
+- `AGENT_LLM_*`、`MCP_CRB_*`、`MCP_RWA_*` 等仅服务端变量在容器启动时注入，不需要重新构建
 - 不使用 `GITHUB_PAGES=true` 构建，因此镜像内保留 BFF 路由
 - 健康检查请求 `http://localhost:3005/`
 
@@ -363,6 +391,8 @@ curl -sS -X POST http://127.0.0.1:3005/api/agent/plan \
 
 ### 7.3 MCP 工具接口
 
+CRB MCP：
+
 ```bash
 curl -sS -X POST http://127.0.0.1:3005/api/mcp/tool \
   -H 'content-type: application/json' \
@@ -376,11 +406,26 @@ curl -sS -X POST http://127.0.0.1:3005/api/mcp/tool \
   }'
 ```
 
+RWA MCP：
+
+```bash
+curl -sS -X POST http://127.0.0.1:3005/api/mcp/tool \
+  -H 'content-type: application/json' \
+  -d '{
+    "name": "confirm_delivery",
+    "input": {
+      "order_id": "NKA-ORD-2026-0842",
+      "receipt_hash": "0x7b21…9d8a"
+    }
+  }'
+```
+
 预期：
 
-- 成功：HTTP 200，`{ "ok": true, "output": { ... } }`
-- 后端失败：HTTP 502，`{ "ok": false, "error": "..." }`
+- 成功：HTTP 200，`{ "ok": true, "output": { ... }, "server": "crb" | "rwa" }`
+- 后端失败：HTTP 502，`{ "ok": false, "error": "...", "server": "crb" | "rwa" }`
 - 工具不在白名单：HTTP 400
+- 未配置对应 server URL：请求由进程内 mock 处理，`server` 字段仍返回路由结果
 
 ## 8. 故障排查
 
@@ -391,7 +436,7 @@ curl -sS -X POST http://127.0.0.1:3005/api/mcp/tool \
 | Codex 返回 404 / 不支持     | 走了 Chat Completions                                     | 使用 `AGENT_LLM_PROTOCOL=responses`，或改用 `openai` 并覆盖 Base URL |
 | LLM 计划被拒绝              | 模型改动了金额、收款方或钱包                              | 属安全预期；检查 prompt 或模型输出                                   |
 | `/api/mcp/tool` 返回 400    | 工具不在白名单                                            | 使用四个结算/确认工具，或调整 `bffToolNames`                         |
-| `/api/mcp/tool` 返回 502    | MCP 不可达、超时、鉴权失败                                | 检查 `MCP_SERVER_URL`、`MCP_SERVER_TOKEN`、网络与证书                |
+| `/api/mcp/tool` 返回 502    | 对应 MCP 不可达、超时、鉴权失败                           | 按响应 `server` 检查 `MCP_CRB_*` 或 `MCP_RWA_*` 的 URL、Token、网络  |
 | Pages 上接口 404            | 静态构建已剔除 BFF                                        | 预期行为；使用 Node 部署启用 BFF                                     |
 | 本地 dev 页面反复刷新/panic | dev 与 build 共用 `.next`                                 | 确认 `pnpm dev` 使用 `.next-dev`；不要覆盖 `NEXT_DIST_DIR`           |
 | 静态构建找不到 API 路由     | `GITHUB_PAGES=true` 下 `route.server.ts` 被忽略           | 预期行为                                                             |
@@ -435,7 +480,7 @@ docker logs -f <container>
 - [ ] `.env` / 密钥管理系统已注入服务端变量
 - [ ] 未把任何密钥写入 `NEXT_PUBLIC_*`
 - [ ] LLM provider、模型、Base URL、区域匹配
-- [ ] MCP 地址、Token、证书与网络连通性已验证
+- [ ] CRB MCP 与 RWA MCP 的地址、Token、证书与网络连通性已分别验证
 - [ ] `/`、`/api/agent/plan`、`/api/mcp/tool` 健康检查通过
 - [ ] 大额审批、小额自动支付、落地页/收款凭证流程已人工走查
 - [ ] Pages：Source = GitHub Actions，`/payfi-marketing` 访问正常

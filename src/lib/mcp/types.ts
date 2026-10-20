@@ -11,6 +11,20 @@ export const mcpToolNames = [
 
 export type McpToolName = (typeof mcpToolNames)[number];
 
+export type McpServerName = 'crb' | 'rwa';
+
+/** Which backend MCP owns each tool. `reject_payment` is local today but maps to CRB. */
+export const mcpToolServer: Record<McpToolName, McpServerName> = {
+  setup_crb_funding: 'crb',
+  check_crb_balance: 'crb',
+  create_trade_order: 'rwa',
+  execute_crb_payment: 'crb',
+  reject_payment: 'crb',
+  verify_crb_settlement: 'crb',
+  execute_onchain_settlement: 'rwa',
+  confirm_delivery: 'rwa',
+};
+
 export const settlementToolNames = [
   'execute_crb_payment',
   'verify_crb_settlement',

@@ -92,8 +92,10 @@ e2e/                   # Playwright flows
   optional LLM planner) and `/api/mcp/tool` (MCP facade). The `.server.ts` extension plus
   `pageExtensions` in `next.config.ts` keeps them out of the Pages static export.
 - Runtime transport: `NEXT_PUBLIC_BFF_ENABLED=true` calls the BFF; static Pages builds use the
-  in-browser mock. Set `MCP_SERVER_URL` / `MCP_SERVER_TOKEN` on the server to forward to the real
-  backend MCP without changing the browser.
+  in-browser mock. Set `MCP_CRB_SERVER_URL` / `MCP_CRB_SERVER_TOKEN` and `MCP_RWA_SERVER_URL` /
+  `MCP_RWA_SERVER_TOKEN` on the server. `mcpToolServer` routes CRB funding/payment/verification to
+  the CRB MCP and order/on-chain/delivery tools to the RWA MCP; each side falls back to the mock
+  independently when its URL is empty.
 - The LLM planner is optional. `AGENT_LLM_PROVIDER` selects `deepseek` / `kimi` / `codex` /
   `openai`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` and
   `OPENAI_API_KEY`. `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL` and

@@ -1,14 +1,24 @@
 import { createHttpMcpTransport } from '@/lib/mcp/http-transport';
 import { createMockMcpTransport } from '@/lib/mcp/mock-transport';
-import type { McpToolInputs } from '@/lib/mcp/types';
-import { isBffToolName, isRecord } from '@/lib/mcp/types';
+import type { McpServerName, McpToolInputs, McpTransport } from '@/lib/mcp/types';
+import { isBffToolName, isRecord, mcpToolServer } from '@/lib/mcp/types';
 
-const mcpServerUrl = process.env.MCP_SERVER_URL;
-const mcpServerToken = process.env.MCP_SERVER_TOKEN;
+const mockTransport = createMockMcpTransport();
 
-const transport = mcpServerUrl
-  ? createHttpMcpTransport({ url: mcpServerUrl, token: mcpServerToken })
-  : createMockMcpTransport();
+function createServerTransport(server: McpServerName): McpTransport {
+  const url = server === 'crb' ? process.env.MCP_CRB_SERVER_URL : process.env.MCP_RWA_SERVER_URL;
+  const token =
+    server === 'crb' ? process.env.MCP_CRB_SERVER_TOKEN : process.env.MCP_RWA_SERVER_TOKEN;
+
+  return url ? createHttpMcpTransport({ url, token }) : mockTransport;
+}
+
+// Each backend can be connected independently; an empty URL keeps that
+// server on the in-process mock while the other one is live.
+const transports: Record<McpServerName, McpTransport> = {
+  crb: createServerTransport('crb'),
+  rwa: createServerTransport('rwa'),
+};
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -22,6 +32,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: 'Unsupported MCP tool' }, { status: 400 });
   }
 
-  const result = await transport.callTool(body.name, body.input as McpToolInputs[typeof body.name]);
-  return Response.json(result, { status: result.ok ? 200 : 502 });
+  const server = mcpToolServer[body.name];
+  const result = await transports[server].callTool(
+    body.name,
+    body.input as McpToolInputs[typeof body.name],
+    { signal: request.signal },
+  );
+
+  return Response.json({ ...result, server }, { status: result.ok ? 200 : 502 });
 }
