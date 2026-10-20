@@ -1,11 +1,12 @@
 # naka-rwa-agent — RWA Agentic Payment Terminal
 
 A bilingual roadshow demo for compliant RWA purchases made by an AI agent. The product is
-“Naka RWA Agent”; the browser title is **RWA Agent**.
+“Naka RWA Agent”; the browser title is **Agentic Payment**.
 
 > **References**
 >
 > - Product PRD: `docs/agentic-payment-prd.md`
+> - Ops/env config: `docs/operations-environment.md`
 > - UI prototype: https://6klwjyb3jee3c.ok.kimi.link/
 > - Design continuity: the earlier EX.IO / Stripe-inspired dark-light system in this repo
 > - Repo/Pages name: `payfi-marketing` (kept so the existing Pages URL and base path remain stable)
@@ -94,7 +95,7 @@ e2e/                   # Playwright flows
   in-browser mock. Set `MCP_SERVER_URL` / `MCP_SERVER_TOKEN` on the server to forward to the real
   backend MCP without changing the browser.
 - The LLM planner is optional. `AGENT_LLM_PROVIDER` selects `deepseek` / `kimi` / `codex` /
-  `openai` / `custom`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` and
+  `openai`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` and
   `OPENAI_API_KEY`. `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL` and
   `AGENT_LLM_PROTOCOL` override the preset; Codex uses the OpenAI Responses API. Without a key the
   deterministic plan runs. LLM output is rejected unless the order, payee, amount and wallet match
@@ -141,6 +142,9 @@ e2e/                   # Playwright flows
   and deterministic plan. Node deployments keep the BFF and can forward to the real MCP.
 - Workflow: `.github/workflows/deploy-pages.yml`; it also calls the Pages API to keep the source
   on GitHub Actions.
+- Docker: multi-stage `Dockerfile` (`node:22-alpine`, standalone, non-root, port 3005);
+  `.gitlab-ci.yml` builds with Kaniko, pushes to ACR and triggers the Helm chart repo for dev.
+  Full env/ops details live in `docs/operations-environment.md`.
 - Page title: `Agentic Payment`; package name: `agentic-payment-fe`.
 - A custom domain would require removing the base path and adding the CNAME; do not do this unless
   asked.

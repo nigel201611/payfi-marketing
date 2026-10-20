@@ -1,0 +1,91 @@
+include:
+  - project: "exiogroup/exio-devops/exio-frontend-ci"
+    ref: "main"
+    file: "/templates/frontend.yml"
+
+variables:
+  ACR_NAMESPACE: "payfi-dev"
+  IMAGE_NAME: "agentic-payment-fe"
+  PNPM_VERSION: "10.12.1"
+  BUILD_OUTPUT_DIR: ".next"
+  # Helm chart repo used by the PayFi deployments. Confirm the service name and
+  # app key with the chart repo before enabling deploy_dev.
+  CHART_REPO_PROJECT_ID: "83630068"
+  CHART_REPO_REF: "main"
+  CHART_REPO_SERVICE_NAME: "agentic-payment-fe"
+  DEPLOY_APPS: "agentic-payment-fe"
+
+# Run on merge requests, main and tags.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: "$CI_COMMIT_TAG"
+
+# Build and push the image on main and tags.
+build_docker:
+  needs:
+    - job: frontend-validate
+      optional: true
+  tags:
+    - build
+    - payfi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: "$CI_COMMIT_TAG"
+    - when: never
+  before_script:
+    - export IMAGE_TAG="${CI_COMMIT_TAG:-${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}}"
+    - mkdir -p /kaniko/.docker
+    - |
+      cat > /kaniko/.docker/config.json <<EOF
+      {"auths":{"${ACR_REGISTRY}":{"username":"${ACR_USER}","password":"${ACR_PASSWORD}"}}}
+      EOF
+  script:
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --destination "${ACR_REGISTRY}/${ACR_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}" \
+        --cache=true \
+        --cache-repo "${ACR_REGISTRY}/${ACR_NAMESPACE}/${IMAGE_NAME}/cache"
+  after_script:
+    - rm -f /kaniko/.docker/config.json
+
+# Trigger the Helm chart repo to roll out the image to the dev environment.
+# Requires the CI/CD variables ACR_REGISTRY, ACR_USER, ACR_PASSWORD and
+# CHART_REPO_TRIGGER_TOKEN in the GitLab project settings.
+deploy_dev:
+  tags:
+    - build
+    - payfi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: "$CI_COMMIT_TAG"
+    - when: never
+  before_script:
+    - export IMAGE_TAG="${CI_COMMIT_TAG:-${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}}"
+    - |
+      SERVICES=''
+      OLD_IFS="$IFS"
+      IFS=','
+      for APP in ${DEPLOY_APPS}; do
+        if [ -z "$SERVICES" ]; then
+          SERVICES="${APP},${IMAGE_TAG}"
+        else
+          SERVICES="${SERVICES};${APP},${IMAGE_TAG}"
+        fi
+      done
+      IFS="$OLD_IFS"
+  script:
+    - |
+      curl --fail-with-body --silent --show-error \
+        --request POST \
+        --form-string "token=${CHART_REPO_TRIGGER_TOKEN}" \
+        --form-string "ref=${CHART_REPO_REF}" \
+        --form-string "variables[SERVICES]=${SERVICES}" \
+        "${CI_API_V4_URL}/projects/${CHART_REPO_PROJECT_ID}/trigger/pipeline" \
+        --output downstream-pipeline.json
+    - |
+      DOWNSTREAM_ID="$(awk 'match($0, /"id":[0-9]+/) { value=substr($0, RSTART, RLENGTH); sub(/^"id":/, "", value); print value; exit }' downstream-pipeline.json)"
+      test -n "${DOWNSTREAM_ID}"

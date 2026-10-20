@@ -48,25 +48,6 @@ describe('resolveLlmConfig', () => {
     });
   });
 
-  it('supports custom OpenAI-compatible gateways', () => {
-    expect(
-      resolveLlmConfig(
-        env({
-          AGENT_LLM_PROVIDER: 'custom',
-          AGENT_LLM_API_KEY: 'sk-custom',
-          AGENT_LLM_BASE_URL: 'https://gateway.example.com/v1',
-          AGENT_LLM_MODEL: 'my-model',
-        }),
-      ),
-    ).toMatchObject({
-      provider: 'custom',
-      apiKey: 'sk-custom',
-      baseUrl: 'https://gateway.example.com/v1',
-      model: 'my-model',
-      protocol: 'chat-completions',
-    });
-  });
-
   it('lets explicit model, base URL and protocol overrides win', () => {
     expect(
       resolveLlmConfig(

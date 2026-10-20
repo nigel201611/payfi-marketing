@@ -3,7 +3,7 @@ import { CRB_TX_PLACEHOLDER } from '@/lib/agent/policy';
 
 export type LlmPlanResponse = { content: unknown } | { error: string };
 export type LlmProtocol = 'chat-completions' | 'responses';
-export type LlmProviderId = 'deepseek' | 'kimi' | 'codex' | 'openai' | 'custom';
+export type LlmProviderId = 'deepseek' | 'kimi' | 'codex' | 'openai';
 
 type LlmPreset = {
   baseUrl: string;
@@ -12,7 +12,7 @@ type LlmPreset = {
   apiKeyEnv: string;
 };
 
-const LLM_PRESETS: Record<Exclude<LlmProviderId, 'custom'>, LlmPreset> = {
+const LLM_PRESETS: Record<LlmProviderId, LlmPreset> = {
   deepseek: {
     baseUrl: 'https://api.deepseek.com/v1',
     model: 'deepseek-flash',
@@ -50,21 +50,20 @@ export type ResolvedLlmConfig = {
 
 export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): ResolvedLlmConfig | null {
   const rawProvider = (env.AGENT_LLM_PROVIDER ?? 'deepseek').trim().toLowerCase();
+  if (!Object.hasOwn(LLM_PRESETS, rawProvider)) return null;
   const provider = rawProvider as LlmProviderId;
-  const preset =
-    rawProvider === 'custom' ? undefined : LLM_PRESETS[rawProvider as keyof typeof LLM_PRESETS];
-  if (rawProvider !== 'custom' && !preset) return null;
+  const preset = LLM_PRESETS[provider];
 
-  const apiKey = env.AGENT_LLM_API_KEY || (preset ? env[preset.apiKeyEnv] : undefined) || '';
-  const baseUrl = env.AGENT_LLM_BASE_URL || preset?.baseUrl;
-  const model = env.AGENT_LLM_MODEL || preset?.model;
+  const apiKey = env.AGENT_LLM_API_KEY || env[preset.apiKeyEnv] || '';
+  const baseUrl = env.AGENT_LLM_BASE_URL || preset.baseUrl;
+  const model = env.AGENT_LLM_MODEL || preset.model;
   if (!apiKey || !baseUrl || !model) return null;
 
   const rawProtocol = env.AGENT_LLM_PROTOCOL;
   const protocol: LlmProtocol =
     rawProtocol === 'responses' || rawProtocol === 'chat-completions'
       ? rawProtocol
-      : (preset?.protocol ?? 'chat-completions');
+      : preset.protocol;
 
   const parsedTimeout = Number(env.AGENT_LLM_TIMEOUT_MS ?? 4_000);
   const timeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 4_000;
@@ -139,7 +138,7 @@ function readResponsesText(payload: unknown): string | null {
 
 /**
  * Optional server-side planner. Providers are selected with
- * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai | custom); a missing
+ * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai); a missing
  * key keeps the deterministic policy, so the demo never depends on a model.
  */
 export async function requestLlmSettlementPlan(

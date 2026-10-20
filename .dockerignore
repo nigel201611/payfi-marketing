@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+.next
+.next-dev
+out
+build
+*.tsbuildinfo
+
+# Tests and local tooling
+coverage
+test-results
+playwright-report
+.playwright-mcp
+__tests__
+e2e
+vitest.config.*
+vitest.setup.*
+playwright.config.*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Git and CI
+.git
+.gitignore
+.github
+.gitlab-ci.yml
+.husky
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.swo
+
+# Docs and agent metadata
+docs
+README.md
+CLAUDE.md
+.claude
+.mcp.json
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Logs / misc
+*.log
+*.tgz
