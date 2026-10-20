@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[96629,["/payfi-marketing/_next/static/chunks/0fhorc87ukea7.js","/payfi-marketing/_next/static/chunks/2iwkfu-i_gqvi.js","/payfi-marketing/_next/static/chunks/3scmguwpm_0zz.js","/payfi-marketing/_next/static/chunks/1wat269skgtsn.js"],"Terminal"]
+3:I[18892,["/payfi-marketing/_next/static/chunks/0fhorc87ukea7.js","/payfi-marketing/_next/static/chunks/2iwkfu-i_gqvi.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{}],[["$","script","script-0",{"src":"/payfi-marketing/_next/static/chunks/3scmguwpm_0zz.js","async":true}],["$","script","script-1",{"src":"/payfi-marketing/_next/static/chunks/1wat269skgtsn.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Q_6-Nub8SpXVDhTt2rc_I"}
+5:null

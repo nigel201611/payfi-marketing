@@ -125,3 +125,7 @@ The workflow `.github/workflows/deploy-pages.yml` exports the static site under 
 - The workflow also calls the Pages API to ensure the GitHub Actions source; it is idempotent.
 - Update `basePath` and `NEXT_PUBLIC_SITE_URL` if the repository is renamed or a custom domain is
   attached.
+- **Current status:** the repository Pages source is still “Deploy from a branch → main / root”.
+  To keep the demo reachable while that setting is unchanged, the latest static export is also
+  committed at the repository root (`index.html`, `_next/`, `.nojekyll`). Once Pages is switched to
+  GitHub Actions, these root artifacts can be removed.
