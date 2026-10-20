@@ -93,9 +93,12 @@ e2e/                   # Playwright flows
 - Runtime transport: `NEXT_PUBLIC_BFF_ENABLED=true` calls the BFF; static Pages builds use the
   in-browser mock. Set `MCP_SERVER_URL` / `MCP_SERVER_TOKEN` on the server to forward to the real
   backend MCP without changing the browser.
-- The LLM planner is optional (`AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL`,
-  `AGENT_LLM_TIMEOUT_MS`). Without a key the deterministic plan runs. LLM output is rejected
-  unless the order, payee, amount and wallet match the authorized intent exactly.
+- The LLM planner is optional. `AGENT_LLM_PROVIDER` selects `deepseek` / `kimi` / `codex` /
+  `openai` / `custom`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` and
+  `OPENAI_API_KEY`. `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL` and
+  `AGENT_LLM_PROTOCOL` override the preset; Codex uses the OpenAI Responses API. Without a key the
+  deterministic plan runs. LLM output is rejected unless the order, payee, amount and wallet match
+  the authorized intent exactly.
 - These secrets are server-only; never expose them through `NEXT_PUBLIC_*`.
 
 ## Design System
@@ -108,6 +111,8 @@ e2e/                   # Playwright flows
 - Green (`brand`) is an accent, not a background wash. Avoid cyan/teal background fields.
 - The welcome copy uses staggered `animate-hero-in`; the primary CTA uses React Bits StarBorder +
   a bounded Magnet (max offset 8px) + a sheen; keep the CTA click target stable.
+- The intent/funding panel uses React Bits `SpotlightCard` at low intensity over a flat vara-style
+  surface: 16px radius, hairline border, no shadow, filled 48px inputs and a green gradient pill.
 - The previous EX.IO favicon (`public/icon.png`) is intentionally retained.
 
 ## Content & i18n

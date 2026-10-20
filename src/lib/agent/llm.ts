@@ -2,6 +2,82 @@ import type { SettlementContext } from '@/lib/agent/types';
 import { CRB_TX_PLACEHOLDER } from '@/lib/agent/policy';
 
 export type LlmPlanResponse = { content: unknown } | { error: string };
+export type LlmProtocol = 'chat-completions' | 'responses';
+export type LlmProviderId = 'deepseek' | 'kimi' | 'codex' | 'openai' | 'custom';
+
+type LlmPreset = {
+  baseUrl: string;
+  model: string;
+  protocol: LlmProtocol;
+  apiKeyEnv: string;
+};
+
+const LLM_PRESETS: Record<Exclude<LlmProviderId, 'custom'>, LlmPreset> = {
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-flash',
+    protocol: 'chat-completions',
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+  },
+  kimi: {
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k3',
+    protocol: 'chat-completions',
+    apiKeyEnv: 'MOONSHOT_API_KEY',
+  },
+  codex: {
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.1-codex-max',
+    protocol: 'responses',
+    apiKeyEnv: 'OPENAI_API_KEY',
+  },
+  openai: {
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.1',
+    protocol: 'chat-completions',
+    apiKeyEnv: 'OPENAI_API_KEY',
+  },
+};
+
+export type ResolvedLlmConfig = {
+  provider: LlmProviderId;
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  protocol: LlmProtocol;
+  timeoutMs: number;
+};
+
+export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): ResolvedLlmConfig | null {
+  const rawProvider = (env.AGENT_LLM_PROVIDER ?? 'deepseek').trim().toLowerCase();
+  const provider = rawProvider as LlmProviderId;
+  const preset =
+    rawProvider === 'custom' ? undefined : LLM_PRESETS[rawProvider as keyof typeof LLM_PRESETS];
+  if (rawProvider !== 'custom' && !preset) return null;
+
+  const apiKey = env.AGENT_LLM_API_KEY || (preset ? env[preset.apiKeyEnv] : undefined) || '';
+  const baseUrl = env.AGENT_LLM_BASE_URL || preset?.baseUrl;
+  const model = env.AGENT_LLM_MODEL || preset?.model;
+  if (!apiKey || !baseUrl || !model) return null;
+
+  const rawProtocol = env.AGENT_LLM_PROTOCOL;
+  const protocol: LlmProtocol =
+    rawProtocol === 'responses' || rawProtocol === 'chat-completions'
+      ? rawProtocol
+      : (preset?.protocol ?? 'chat-completions');
+
+  const parsedTimeout = Number(env.AGENT_LLM_TIMEOUT_MS ?? 4_000);
+  const timeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 4_000;
+
+  return {
+    provider,
+    apiKey,
+    baseUrl: baseUrl.replace(/\/$/, ''),
+    model,
+    protocol,
+    timeoutMs,
+  };
+}
 
 function extractJson(text: string): unknown | null {
   const withoutFences = text.replace(/```(?:json)?/gi, '').trim();
@@ -37,23 +113,41 @@ function extractJson(text: string): unknown | null {
   return null;
 }
 
+function readResponsesText(payload: unknown): string | null {
+  if (typeof payload !== 'object' || payload === null) return null;
+  const record = payload as Record<string, unknown>;
+  if (typeof record.output_text === 'string') return record.output_text;
+
+  if (!Array.isArray(record.output)) return null;
+  for (const item of record.output) {
+    if (typeof item !== 'object' || item === null) continue;
+    const content = (item as Record<string, unknown>).content;
+    if (!Array.isArray(content)) continue;
+    for (const part of content) {
+      if (
+        typeof part === 'object' &&
+        part !== null &&
+        (part as Record<string, unknown>).type === 'output_text' &&
+        typeof (part as Record<string, unknown>).text === 'string'
+      ) {
+        return (part as Record<string, unknown>).text as string;
+      }
+    }
+  }
+  return null;
+}
+
 /**
- * Optional server-side planner. Without AGENT_LLM_API_KEY the deterministic
- * policy is used, so the demo never depends on a model being reachable.
+ * Optional server-side planner. Providers are selected with
+ * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai | custom); a missing
+ * key keeps the deterministic policy, so the demo never depends on a model.
  */
 export async function requestLlmSettlementPlan(
   context: SettlementContext,
   fetchImpl: typeof fetch = fetch,
 ): Promise<LlmPlanResponse> {
-  const apiKey = process.env.AGENT_LLM_API_KEY;
-  if (!apiKey) return { error: 'LLM planner not configured' };
-
-  const baseUrl = (process.env.AGENT_LLM_BASE_URL ?? 'https://api.deepseek.com/v1').replace(
-    /\/$/,
-    '',
-  );
-  const model = process.env.AGENT_LLM_MODEL ?? 'deepseek-chat';
-  const timeoutMs = Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 4_000);
+  const config = resolveLlmConfig();
+  if (!config) return { error: 'LLM planner not configured' };
 
   const system = [
     'You are the settlement planner for a mock agentic RWA payment terminal.',
@@ -69,34 +163,56 @@ export async function requestLlmSettlementPlan(
   const user = JSON.stringify({ task: 'build_settlement_plan', context });
 
   try {
-    const response = await fetchImpl(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-        response_format: { type: 'json_object' },
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
+    const response =
+      config.protocol === 'responses'
+        ? await fetchImpl(`${config.baseUrl}/responses`, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${config.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: config.model,
+              store: false,
+              instructions: system,
+              input: user,
+              text: { format: { type: 'json_object' } },
+            }),
+            signal: AbortSignal.timeout(config.timeoutMs),
+          })
+        : await fetchImpl(`${config.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${config.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: config.model,
+              temperature: 0,
+              messages: [
+                { role: 'system', content: system },
+                { role: 'user', content: user },
+              ],
+              response_format: { type: 'json_object' },
+            }),
+            signal: AbortSignal.timeout(config.timeoutMs),
+          });
 
-    if (!response.ok) return { error: `LLM HTTP ${response.status}` };
+    if (!response.ok) {
+      return { error: `${config.provider} HTTP ${response.status}` };
+    }
 
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = payload.choices?.[0]?.message?.content;
-    if (!content) return { error: 'LLM returned no content' };
+    const payload: unknown = await response.json();
+    const content =
+      config.protocol === 'responses'
+        ? readResponsesText(payload)
+        : (payload as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message
+            ?.content;
+
+    if (!content) return { error: `${config.provider} returned no content` };
 
     const parsed = extractJson(content);
-    return parsed ? { content: parsed } : { error: 'LLM returned invalid JSON' };
+    return parsed ? { content: parsed } : { error: `${config.provider} returned invalid JSON` };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       return { error: 'LLM planner timed out' };

@@ -1,15 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Check, Loader2 } from 'lucide-react';
-import {
-  ActionButton,
-  Eyebrow,
-  FieldLabel,
-  StatusDot,
-  TerminalCard,
-  TextField,
-} from '@/components/terminal/ui';
+import SpotlightCard from '@/components/react-bits/SpotlightCard';
+import { useTheme } from '@/components/providers/theme-provider';
+import { ActionButton, FieldLabel, StatusDot, TextField } from '@/components/terminal/ui';
 import type { IntentPatch } from '@/components/terminal/types';
 import { demoConfig, type IntentValues, type Scenario } from '@/constants/terminal';
 import { useI18n } from '@/i18n/locale-provider';
@@ -27,16 +22,46 @@ type IntentStepProps = {
 
 const categoryKeys = ['energy', 'moneyMarket', 'bonds'] as const;
 
+const spotlightPanelStyle = {
+  borderRadius: 16,
+  padding: 0,
+  boxShadow: 'none',
+  '--spotlight-card-surface': 'var(--workspace-card)',
+  '--spotlight-card-border': 'var(--border)',
+  '--spotlight-card-shadow': 'none',
+} as CSSProperties;
+
+function VaraPanel({ children }: { children: ReactNode }) {
+  const { theme } = useTheme();
+
+  return (
+    <SpotlightCard
+      theme={theme}
+      className="mt-8"
+      style={spotlightPanelStyle}
+      intensity={0.08}
+      spotlightColor="#00dd95"
+      spotlightSize={300}
+      softness={0.8}
+      borderGlow={0.3}
+      proximity={60}
+      grain={0}
+    >
+      {children}
+    </SpotlightCard>
+  );
+}
+
 function SectionHeader({ index, title }: { index: string; title: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-muted-foreground/70 font-mono text-[0.62rem] tracking-[0.16em]">
+    <div className="flex items-center gap-2.5">
+      <span
+        className="bg-foreground text-background grid size-5 shrink-0 place-items-center rounded-full text-[0.62rem] font-bold"
+        aria-hidden="true"
+      >
         {index}
       </span>
-      <h3 className="text-foreground text-[0.74rem] font-semibold tracking-[0.08em] uppercase">
-        {title}
-      </h3>
-      <span className="bg-border h-px flex-1" aria-hidden="true" />
+      <h3 className="text-foreground text-base font-bold">{title}</h3>
     </div>
   );
 }
@@ -54,19 +79,19 @@ export function IntentStep({
   const copy = t.intent;
 
   return (
-    <div className="py-8 lg:py-12">
-      <Eyebrow>{copy.eyebrow}</Eyebrow>
-      <h2 className="font-display text-foreground mt-4 text-[clamp(2rem,3.4vw,3rem)] leading-[1.02] font-extrabold tracking-[-0.045em]">
+    <div className="py-8 lg:py-10">
+      <p className="text-muted-foreground text-sm font-medium">{copy.eyebrow}</p>
+      <h2 className="font-display text-foreground mt-1.5 text-[1.75rem] leading-9 font-extrabold tracking-[-0.02em] sm:text-[2rem] sm:leading-10">
         {copy.title}
       </h2>
 
       {phase === 'form' ? (
-        <TerminalCard className="mt-8 overflow-hidden">
+        <VaraPanel>
           <div className="grid lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)]">
             <div className="space-y-8 p-5 sm:p-7 lg:p-8">
               <fieldset>
                 <legend className="sr-only">{copy.categoriesLabel}</legend>
-                <SectionHeader index="01" title={copy.categoriesTitle} />
+                <SectionHeader index="1" title={copy.categoriesTitle} />
                 <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
                   {categoryKeys.map((key) => {
                     const selected = intent.categories[key];
@@ -74,10 +99,10 @@ export function IntentStep({
                       <label
                         key={key}
                         className={cn(
-                          'group flex min-h-[5.75rem] cursor-pointer flex-col justify-between gap-3 rounded-2xl border p-4 transition-all duration-200',
+                          'flex min-h-[4.5rem] cursor-pointer flex-col justify-center gap-2.5 rounded-2xl border px-4 py-3.5 transition-colors',
                           selected
-                            ? 'border-brand/40 bg-brand/[0.07]'
-                            : 'border-border bg-background/40 hover:border-foreground/20 hover:bg-background/60',
+                            ? 'border-brand/45 bg-brand/[0.06]'
+                            : 'border-border bg-background/40 hover:border-foreground/20 hover:bg-foreground/[0.03]',
                         )}
                       >
                         <input
@@ -90,33 +115,18 @@ export function IntentStep({
                             })
                           }
                         />
-                        <span className="flex items-center justify-between">
-                          <span
-                            className={cn(
-                              'grid size-7 place-items-center rounded-lg border transition-colors',
-                              selected
-                                ? 'border-brand bg-brand text-ink'
-                                : 'border-border bg-background text-muted-foreground',
-                            )}
-                            aria-hidden="true"
-                          >
-                            {selected ? (
-                              <Check className="size-3.5" />
-                            ) : (
-                              <span className="size-1 rounded-full bg-current opacity-50" />
-                            )}
-                          </span>
-                          <span
-                            className={cn(
-                              'size-1.5 rounded-full transition-colors',
-                              selected
-                                ? 'bg-brand shadow-[0_0_10px_rgba(0,221,149,0.7)]'
-                                : 'bg-border',
-                            )}
-                            aria-hidden="true"
-                          />
+                        <span
+                          className={cn(
+                            'grid size-5 shrink-0 place-items-center rounded-full border transition-colors',
+                            selected
+                              ? 'border-brand bg-brand text-ink'
+                              : 'border-muted-foreground/40',
+                          )}
+                          aria-hidden="true"
+                        >
+                          {selected ? <Check className="size-3" /> : null}
                         </span>
-                        <span className="text-foreground text-sm leading-snug font-medium">
+                        <span className="text-foreground text-sm leading-snug font-semibold">
                           {copy.categories[key]}
                         </span>
                       </label>
@@ -127,10 +137,15 @@ export function IntentStep({
 
               <fieldset>
                 <legend className="sr-only">{copy.preferencesLabel}</legend>
-                <SectionHeader index="02" title={copy.preferencesLabel} />
+                <SectionHeader index="2" title={copy.preferencesLabel} />
                 <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                   <div>
-                    <FieldLabel htmlFor="min-apy">{copy.minApyLabel}</FieldLabel>
+                    <FieldLabel
+                      htmlFor="min-apy"
+                      className="text-foreground/60 mb-1.5 block text-sm font-semibold"
+                    >
+                      {copy.minApyLabel}
+                    </FieldLabel>
                     <div className="relative">
                       <input
                         id="min-apy"
@@ -138,19 +153,19 @@ export function IntentStep({
                         inputMode="decimal"
                         value={intent.minApy}
                         onChange={(event) => onChange({ minApy: event.target.value })}
-                        className="border-border bg-background/60 text-foreground focus:border-brand/60 focus:ring-brand/20 mt-1.5 h-11 w-full rounded-xl border pr-8 pl-3.5 font-mono text-sm transition-colors outline-none focus:ring-2"
+                        className="bg-foreground/[0.03] text-foreground focus:ring-brand/30 h-12 w-full rounded-lg pr-8 pl-3.5 font-mono text-sm font-semibold transition-shadow outline-none focus:ring-2"
                       />
-                      <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs">
+                      <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-xs">
                         %
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-foreground/60 block text-[0.72rem] font-medium tracking-wide">
+                    <span className="text-foreground/60 mb-1.5 block text-sm font-semibold">
                       {copy.settlementLabel}
                     </span>
-                    <div className="border-border bg-background/50 mt-1.5 grid grid-cols-3 gap-1 rounded-xl border p-1">
+                    <div className="bg-foreground/[0.05] grid h-12 grid-cols-3 gap-1 rounded-full p-1">
                       {copy.settlementOptions.map((label, index) => {
                         const value = (['T+0', 'T+1', 'T+2'] as const)[index];
                         const active = intent.settlement === value;
@@ -158,9 +173,9 @@ export function IntentStep({
                           <label
                             key={value}
                             className={cn(
-                              'flex h-9 cursor-pointer items-center justify-center rounded-lg text-[0.72rem] font-medium transition-colors',
+                              'flex h-10 cursor-pointer items-center justify-center rounded-full text-sm font-semibold transition-all',
                               active
-                                ? 'bg-brand/15 text-accent-text'
+                                ? 'bg-workspace-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)]'
                                 : 'text-muted-foreground hover:text-foreground',
                             )}
                           >
@@ -181,10 +196,10 @@ export function IntentStep({
                 </div>
 
                 <div className="mt-4">
-                  <span className="text-foreground/60 block text-[0.72rem] font-medium tracking-wide">
+                  <span className="text-foreground/60 mb-1.5 block text-sm font-semibold">
                     {copy.riskLabel}
                   </span>
-                  <div className="border-border bg-background/50 mt-1.5 grid grid-cols-3 gap-1 rounded-xl border p-1">
+                  <div className="bg-foreground/[0.05] grid h-12 grid-cols-3 gap-1 rounded-full p-1">
                     {copy.riskOptions.map((label, index) => {
                       const value = (['low', 'medium', 'high'] as const)[index];
                       const active = intent.risk === value;
@@ -192,9 +207,9 @@ export function IntentStep({
                         <label
                           key={value}
                           className={cn(
-                            'flex h-9 cursor-pointer items-center justify-center rounded-lg px-2 text-center text-[0.7rem] font-medium transition-colors',
+                            'flex h-10 cursor-pointer items-center justify-center rounded-full px-2 text-center text-[0.8rem] font-semibold whitespace-nowrap transition-all sm:text-sm',
                             active
-                              ? 'bg-brand/15 text-accent-text'
+                              ? 'bg-workspace-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)]'
                               : 'text-muted-foreground hover:text-foreground',
                           )}
                         >
@@ -214,23 +229,28 @@ export function IntentStep({
                 </div>
               </fieldset>
 
-              <div className="border-brand/20 bg-brand/[0.06] rounded-xl border px-4 py-3.5">
-                <p className="text-accent-text flex items-center gap-2 text-[0.66rem] font-semibold tracking-[0.12em] uppercase">
+              <div className="border-brand/20 bg-brand/[0.06] rounded-lg border px-4 py-3.5">
+                <p className="text-accent-text flex items-center gap-2 text-[0.68rem] font-bold tracking-[0.1em] uppercase">
                   <StatusDot />
                   {copy.policyLabel}
                 </p>
-                <p className="text-muted-foreground mt-2 text-[0.72rem] leading-relaxed">
+                <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
                   {copy.policyNote}
                 </p>
               </div>
             </div>
 
-            <aside className="border-border bg-background/30 border-t p-5 sm:p-7 lg:border-t-0 lg:border-l lg:p-8">
+            <aside className="border-border bg-foreground/[0.02] border-t p-5 sm:p-7 lg:border-t-0 lg:border-l lg:p-8">
               <section>
-                <SectionHeader index="03" title={copy.limitsTitle} />
+                <SectionHeader index="3" title={copy.limitsTitle} />
                 <div className="mt-4 space-y-4">
                   <div>
-                    <FieldLabel htmlFor="single-limit">{copy.singleLimitLabel}</FieldLabel>
+                    <FieldLabel
+                      htmlFor="single-limit"
+                      className="text-foreground/60 mb-1.5 block text-sm font-semibold"
+                    >
+                      {copy.singleLimitLabel}
+                    </FieldLabel>
                     <div className="relative">
                       <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 font-mono text-sm">
                         $
@@ -241,12 +261,17 @@ export function IntentStep({
                         inputMode="numeric"
                         value={intent.singleLimit}
                         onChange={(event) => onChange({ singleLimit: event.target.value })}
-                        className="pl-7 font-mono"
+                        className="bg-foreground/[0.03] focus:ring-brand/30 mt-0 h-12 rounded-lg pl-7 font-mono font-semibold focus:ring-2"
                       />
                     </div>
                   </div>
                   <div>
-                    <FieldLabel htmlFor="max-budget">{copy.maxBudgetLabel}</FieldLabel>
+                    <FieldLabel
+                      htmlFor="max-budget"
+                      className="text-foreground/60 mb-1.5 block text-sm font-semibold"
+                    >
+                      {copy.maxBudgetLabel}
+                    </FieldLabel>
                     <div className="relative">
                       <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 font-mono text-sm">
                         $
@@ -257,7 +282,7 @@ export function IntentStep({
                         inputMode="numeric"
                         value={intent.maxBudget}
                         onChange={(event) => onChange({ maxBudget: event.target.value })}
-                        className="pl-7 font-mono"
+                        className="bg-foreground/[0.03] focus:ring-brand/30 mt-0 h-12 rounded-lg pl-7 font-mono font-semibold focus:ring-2"
                       />
                     </div>
                   </div>
@@ -265,20 +290,20 @@ export function IntentStep({
               </section>
 
               <fieldset className="mt-6">
-                <legend className="text-foreground/60 block text-[0.72rem] font-medium tracking-wide">
+                <legend className="text-foreground/60 mb-1.5 block text-sm font-semibold">
                   {copy.custodyLabel}
                 </legend>
-                <div className="mt-1.5 grid gap-2">
+                <div className="grid gap-2">
                   {copy.wallets.map((wallet) => {
                     const active = intent.wallet === wallet.value;
                     return (
                       <label
                         key={wallet.value}
                         className={cn(
-                          'flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3 transition-colors',
+                          'flex cursor-pointer items-center gap-3 rounded-2xl border px-3.5 py-3 transition-colors',
                           active
-                            ? 'border-brand/40 bg-brand/10'
-                            : 'border-border bg-background/50 hover:border-foreground/20',
+                            ? 'border-brand/45 bg-brand/[0.06]'
+                            : 'border-border bg-background/40 hover:border-foreground/20',
                         )}
                       >
                         <input
@@ -291,7 +316,7 @@ export function IntentStep({
                         />
                         <span
                           className={cn(
-                            'grid size-4 shrink-0 place-items-center rounded-full border transition-colors',
+                            'grid size-5 shrink-0 place-items-center rounded-full border transition-colors',
                             active ? 'border-brand bg-brand' : 'border-muted-foreground/40',
                           )}
                           aria-hidden="true"
@@ -299,10 +324,10 @@ export function IntentStep({
                           {active ? <span className="bg-ink size-1.5 rounded-full" /> : null}
                         </span>
                         <span className="min-w-0">
-                          <span className="text-foreground block font-mono text-xs tracking-wide">
+                          <span className="text-foreground block font-mono text-[0.8rem] font-semibold tracking-wide">
                             {wallet.address}
                           </span>
-                          <span className="text-muted-foreground mt-0.5 block truncate text-[0.66rem]">
+                          <span className="text-muted-foreground mt-0.5 block truncate text-xs">
                             {wallet.name}
                           </span>
                         </span>
@@ -315,18 +340,23 @@ export function IntentStep({
               {error ? (
                 <p
                   role="alert"
-                  className="mt-4 rounded-xl border border-red-400/25 bg-red-400/[0.06] px-3.5 py-2.5 text-xs text-red-500 dark:text-red-300"
+                  className="border-destructive/30 bg-destructive/[0.06] text-destructive mt-4 rounded-lg border px-3.5 py-2.5 text-xs font-semibold"
                 >
                   {error}
                 </p>
               ) : null}
 
-              <ActionButton size="lg" onClick={onConfirm} className="mt-5 w-full">
+              <ActionButton
+                variant="gradient"
+                size="lg"
+                onClick={onConfirm}
+                className="mt-5 h-12 w-full text-sm font-bold"
+              >
                 {copy.confirm}
               </ActionButton>
             </aside>
           </div>
-        </TerminalCard>
+        </VaraPanel>
       ) : (
         <FundingPanel onSimulate={onSimulate} onAbandon={onAbandon} />
       )}
@@ -352,18 +382,14 @@ function FundingPanel({
   }
 
   return (
-    <TerminalCard className="relative mt-8 overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(0,221,149,0.1),transparent_70%)]"
-      />
-      <div className="relative grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+    <VaraPanel>
+      <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="p-5 sm:p-7 lg:p-8">
-          <Eyebrow>{copy.eyebrow}</Eyebrow>
-          <h3 className="font-display text-foreground mt-3 text-xl font-bold tracking-[-0.03em] sm:text-2xl">
+          <p className="text-muted-foreground text-sm font-medium">{copy.eyebrow}</p>
+          <h3 className="font-display text-foreground mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">
             {copy.title}
           </h3>
-          <p className="text-muted-foreground mt-2.5 max-w-md text-sm leading-relaxed">
+          <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
             {copy.description}
           </p>
 
@@ -372,36 +398,30 @@ function FundingPanel({
               { label: copy.routing, value: demoConfig.routingNumber },
               { label: copy.account, value: demoConfig.accountNumber },
             ].map((field) => (
-              <div
-                key={field.label}
-                className="border-border bg-background/50 rounded-xl border px-4 py-3.5"
-              >
-                <p className="text-muted-foreground text-[0.62rem] tracking-[0.12em] uppercase">
-                  {field.label}
-                </p>
-                <p className="text-foreground mt-1.5 font-mono text-lg tracking-wide">
+              <div key={field.label} className="bg-foreground/[0.03] rounded-lg px-4 py-3.5">
+                <p className="text-muted-foreground text-xs font-medium">{field.label}</p>
+                <p className="text-foreground mt-1 font-mono text-base font-semibold tracking-wide">
                   {field.value}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="border-border bg-background/40 mt-4 flex items-center gap-2.5 rounded-xl border px-4 py-3">
+          <div className="bg-brand/[0.06] mt-4 flex items-center gap-2.5 rounded-lg px-4 py-3">
             <span className="bg-brand size-1.5 animate-pulse rounded-full" aria-hidden="true" />
             <p className="text-muted-foreground text-xs">{copy.waiting}</p>
           </div>
         </div>
 
-        <aside className="border-border bg-background/30 border-t p-5 sm:p-7 lg:border-t-0 lg:border-l lg:p-8">
-          <p className="text-foreground text-[0.72rem] font-semibold tracking-[0.08em] uppercase">
-            {copy.scenarioLabel}
-          </p>
+        <aside className="border-border bg-foreground/[0.02] border-t p-5 sm:p-7 lg:border-t-0 lg:border-l lg:p-8">
+          <p className="text-foreground text-sm font-bold">{copy.scenarioLabel}</p>
           <div className="mt-3 grid gap-2.5">
             <ActionButton
+              variant="gradient"
               size="lg"
               onClick={() => simulate('large')}
               disabled={busy !== null}
-              className="w-full"
+              className="h-12 w-full text-sm font-bold"
             >
               {busy === 'large' ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -409,11 +429,11 @@ function FundingPanel({
               {copy.simulateLarge}
             </ActionButton>
             <ActionButton
-              size="lg"
               variant="outline"
+              size="lg"
               onClick={() => simulate('small')}
               disabled={busy !== null}
-              className="w-full"
+              className="h-12 w-full border-[1.5px] text-sm font-semibold"
             >
               {busy === 'small' ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -431,11 +451,11 @@ function FundingPanel({
             {copy.abandon}
           </button>
 
-          <p className="border-border bg-background/40 text-muted-foreground mt-5 rounded-xl border px-4 py-3 text-[0.7rem] leading-relaxed">
+          <p className="bg-foreground/[0.03] text-muted-foreground mt-5 rounded-lg px-4 py-3 text-xs leading-relaxed">
             {copy.note}
           </p>
         </aside>
       </div>
-    </TerminalCard>
+    </VaraPanel>
   );
 }

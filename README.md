@@ -89,15 +89,15 @@ docs/
 
 ## Mock Data
 
-| Item | Value |
-| --- | --- |
-| Demo client | Naka Financial Technologies Ltd. (pre-seeded KYC) |
-| Single-transaction limit | $10,000 |
-| Max budget / available funds | $100,000 (editable) |
-| Large demo order | 16 × U.S. Treasury Short-Term Certificate 30D → $16,000 → human approval |
-| Small demo order | 10 × New Energy Plant Revenue Rights #07 → $6,000 → auto payment |
-| Payee | EXIO Bank · CRB •••• 3456 |
-| Settlement | mocked CRB clearing + mock on-chain RWA delivery |
+| Item                         | Value                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Demo client                  | Naka Financial Technologies Ltd. (pre-seeded KYC)                        |
+| Single-transaction limit     | $10,000                                                                  |
+| Max budget / available funds | $100,000 (editable)                                                      |
+| Large demo order             | 16 × U.S. Treasury Short-Term Certificate 30D → $16,000 → human approval |
+| Small demo order             | 10 × New Energy Plant Revenue Rights #07 → $6,000 → auto payment         |
+| Payee                        | EXIO Bank · CRB •••• 3456                                                |
+| Settlement                   | mocked CRB clearing + mock on-chain RWA delivery                         |
 
 The state machine lives in `src/components/terminal/terminal.tsx`. All delayed agent activity uses
 cleared timers and a run token, so resetting or unmounting cannot leak callbacks. All copy is in
@@ -113,7 +113,8 @@ The previous EX.IO / Stripe-inspired visual system is retained:
   near-black in both themes for a clear information/terminal split
 - The primary launch CTA keeps the React Bits StarBorder light, a subtle bounded magnet
   (max 8px), and a light sweep; the welcome copy fades/blurs in with a stagger
-- The EX.IO favicon from `public/icon.png` is retained as requested; the page title is “RWA Agent”
+- The EX.IO favicon from `public/icon.png` is retained as requested; the page title is
+  “Agentic Payment”
 
 ## GitHub Pages
 
@@ -125,7 +126,5 @@ The workflow `.github/workflows/deploy-pages.yml` exports the static site under 
 - The workflow also calls the Pages API to ensure the GitHub Actions source; it is idempotent.
 - Update `basePath` and `NEXT_PUBLIC_SITE_URL` if the repository is renamed or a custom domain is
   attached.
-- **Current status:** the repository Pages source is still “Deploy from a branch → main / root”.
-  To keep the demo reachable while that setting is unchanged, the latest static export is also
-  committed at the repository root (`index.html`, `_next/`, `.nojekyll`). Once Pages is switched to
-  GitHub Actions, these root artifacts can be removed.
+- The workflow uploads `out/` as the Pages artifact. Generated static files are no longer committed
+  at the repository root; `pnpm build:pages` produces them locally under `out/` (gitignored).

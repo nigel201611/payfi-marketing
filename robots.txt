@@ -1,4 +1,0 @@
-User-Agent: *
-Allow: /
-
-Sitemap: https://nigel201611.github.io/payfi-marketing/sitemap.xml

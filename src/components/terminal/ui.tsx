@@ -31,7 +31,7 @@ export function Eyebrow({
 }
 
 type ActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'outline';
+  variant?: 'primary' | 'outline' | 'gradient';
   size?: 'md' | 'lg';
 };
 
@@ -47,9 +47,11 @@ export function ActionButton({
       type={type}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 disabled:pointer-events-none disabled:opacity-45',
-        variant === 'primary'
-          ? 'bg-brand text-ink hover:bg-brand-soft shadow-[0_16px_40px_-14px_rgba(0,221,149,0.5)]'
-          : 'border-border bg-card/50 text-foreground/80 hover:bg-card hover:text-foreground border',
+        variant === 'gradient'
+          ? 'text-ink bg-[linear-gradient(90deg,#36cdca_0%,#00dd95_100%)] hover:brightness-[0.97]'
+          : variant === 'primary'
+            ? 'bg-brand text-ink hover:bg-brand-soft shadow-[0_16px_40px_-14px_rgba(0,221,149,0.5)]'
+            : 'border-border bg-card/50 text-foreground/80 hover:bg-card hover:text-foreground border',
         size === 'lg' ? 'h-[3.25rem] px-7 text-[0.95rem]' : 'h-11 px-5',
         className,
       )}
