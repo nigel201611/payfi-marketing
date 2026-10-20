@@ -4,6 +4,7 @@ A bilingual roadshow demo for compliant RWA purchases made by an AI agent. The p
 “Naka RWA Agent”; the browser title is **RWA Agent**.
 
 > **References**
+>
 > - Product PRD: `docs/agentic-payment-prd.md`
 > - UI prototype: https://6klwjyb3jee3c.ok.kimi.link/
 > - Design continuity: the earlier EX.IO / Stripe-inspired dark-light system in this repo
@@ -109,6 +110,6 @@ e2e/                   # Playwright flows
 - GitHub Pages: `GITHUB_PAGES=true` static export with base path `/payfi-marketing`.
 - Workflow: `.github/workflows/deploy-pages.yml`; it also calls the Pages API to keep the source
   on GitHub Actions.
-- Page title: `RWA Agent`; package name: `naka-rwa-agent`.
+- Page title: `RWA Agent`; package name: `agentic-payment-fe`.
 - A custom domain would require removing the base path and adding the CNAME; do not do this unless
   asked.

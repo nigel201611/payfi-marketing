@@ -1,5 +1,5 @@
 {
-  "name": "naka-rwa-agent",
+  "name": "agentic-payment-fe",
   "version": "0.1.0",
   "private": true,
   "description": "Naka RWA Agent \u2014 agentic RWA payment terminal demo with mocked bank and settlement APIs",
