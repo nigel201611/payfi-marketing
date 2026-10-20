@@ -26,6 +26,19 @@ describe('resolveLlmConfig', () => {
     });
   });
 
+  it('uses the GLM preset and the Zhipu key', () => {
+    expect(
+      resolveLlmConfig(env({ AGENT_LLM_PROVIDER: 'glm', ZHIPU_API_KEY: 'sk-zhipu' })),
+    ).toMatchObject({
+      provider: 'glm',
+      apiKey: 'sk-zhipu',
+      baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+      model: 'glm-5.3',
+      protocol: 'chat-completions',
+      reasoningEffort: 'low',
+    });
+  });
+
   it('uses the OpenAI preset', () => {
     expect(
       resolveLlmConfig(env({ AGENT_LLM_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-openai' })),

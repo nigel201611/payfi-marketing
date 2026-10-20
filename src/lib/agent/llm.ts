@@ -3,13 +3,15 @@ import { CRB_TX_PLACEHOLDER } from '@/lib/agent/policy';
 
 export type LlmPlanResponse = { content: unknown } | { error: string };
 export type LlmProtocol = 'chat-completions' | 'responses';
-export type LlmProviderId = 'deepseek' | 'kimi' | 'codex' | 'openai';
+export type LlmProviderId = 'deepseek' | 'kimi' | 'codex' | 'openai' | 'glm';
+export type LlmReasoningEffort = 'low' | 'high' | 'max';
 
 type LlmPreset = {
   baseUrl: string;
   model: string;
   protocol: LlmProtocol;
   apiKeyEnv: string;
+  reasoningEffort?: LlmReasoningEffort;
 };
 
 const LLM_PRESETS: Record<LlmProviderId, LlmPreset> = {
@@ -37,6 +39,14 @@ const LLM_PRESETS: Record<LlmProviderId, LlmPreset> = {
     protocol: 'chat-completions',
     apiKeyEnv: 'OPENAI_API_KEY',
   },
+  glm: {
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-5.3',
+    protocol: 'chat-completions',
+    apiKeyEnv: 'ZHIPU_API_KEY',
+    // GLM-5.3 always thinks; `low` keeps the demo planner within its timeout.
+    reasoningEffort: 'low',
+  },
 };
 
 export type ResolvedLlmConfig = {
@@ -46,6 +56,7 @@ export type ResolvedLlmConfig = {
   model: string;
   protocol: LlmProtocol;
   timeoutMs: number;
+  reasoningEffort?: LlmReasoningEffort;
 };
 
 export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): ResolvedLlmConfig | null {
@@ -75,6 +86,7 @@ export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): Resolved
     model,
     protocol,
     timeoutMs,
+    reasoningEffort: preset.reasoningEffort,
   };
 }
 
@@ -174,6 +186,12 @@ async function requestModelJson(
                 { role: 'user', content: user },
               ],
               response_format: { type: 'json_object' },
+              ...(config.reasoningEffort
+                ? {
+                    thinking: { type: 'enabled' },
+                    reasoning_effort: config.reasoningEffort,
+                  }
+                : {}),
             }),
             signal: AbortSignal.timeout(config.timeoutMs),
           });
@@ -203,7 +221,7 @@ async function requestModelJson(
 
 /**
  * Optional server-side planner. Providers are selected with
- * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai); a missing
+ * AGENT_LLM_PROVIDER (deepseek | kimi | codex | openai | glm); a missing
  * key keeps the deterministic policy, so the demo never depends on a model.
  */
 export async function requestLlmSettlementPlan(
