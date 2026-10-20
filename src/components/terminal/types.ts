@@ -14,7 +14,7 @@ export type LogEntry = {
 
 export type Stage = 'welcome' | 'launch' | 'intent' | 'strategy' | 'settlement' | 'receipt';
 export type IntentPhase = 'form' | 'funding';
-export type Overlay = 'approval' | 'payment' | 'rejected' | null;
+export type Overlay = 'approval' | 'payment' | null;
 
 export type ReceiptData = {
   order: Order;

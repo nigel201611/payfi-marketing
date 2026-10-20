@@ -119,6 +119,10 @@ const en = {
   strategy: {
     eyebrow: 'STEP 03 · AGENT STRATEGY',
     title: 'Strategy execution & ordering',
+    back: 'Back to previous step',
+    description: 'The agent scans eligible RWA assets and prepares an order within your mandate.',
+    fundingReady: 'CRB balance ready',
+    retryPayment: 'Large payment pending approval',
     scanning: 'Agent is scanning the RWA market...',
     availableFunds: 'Available funds',
     evaluating: 'Agent evaluating...',
@@ -144,7 +148,7 @@ const en = {
   },
   approval: {
     eyebrow: 'STEP 04 · HUMAN APPROVAL',
-    title: '⚠️ Agent requests a large payment',
+    title: 'Agent requests a large payment',
     description: 'This order exceeds your single-transaction limit and requires your approval.',
     asset: 'Asset',
     quantity: 'Quantity',
@@ -157,9 +161,6 @@ const en = {
     approve: 'Approve payment',
     reject: 'Reject',
     blocked: 'Blocked and waiting for human confirmation...',
-    rejectedTitle: 'Payment rejected',
-    rejectedBody: 'The order has been cancelled and the reserved budget has been released.',
-    reset: 'Start a new demo',
   },
   payment: {
     eyebrow: 'STEP 04 · PAYMENT',
@@ -391,6 +392,10 @@ const zh: Messages = {
   strategy: {
     eyebrow: 'STEP 03 · Agent 策略',
     title: '策略执行与下单',
+    back: '返回上一步',
+    description: 'Agent 会根据您的授权筛选 RWA 资产并准备订单。',
+    fundingReady: 'CRB 资金已就绪',
+    retryPayment: '大额支付待审批',
     scanning: 'Agent 正在扫描 RWA 市场...',
     availableFunds: '可用资金',
     evaluating: 'Agent 正在评估计算...',
@@ -416,7 +421,7 @@ const zh: Messages = {
   },
   approval: {
     eyebrow: 'STEP 04 · 人工审批',
-    title: '⚠️ Agent 申请大额支付',
+    title: 'Agent 申请大额支付',
     description: '该订单超过您的单笔交易限额，需要您的批准。',
     asset: '买入资产',
     quantity: '资产数量',
@@ -429,9 +434,6 @@ const zh: Messages = {
     approve: '批准打款',
     reject: '拒绝',
     blocked: '阻断挂起，等待人工确认...',
-    rejectedTitle: '支付已拒绝',
-    rejectedBody: '订单已取消，已释放预留预算。',
-    reset: '重新开始演示',
   },
   payment: {
     eyebrow: 'STEP 04 · 支付',

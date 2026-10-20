@@ -23,19 +23,21 @@ export function AnimatedCta({
         onClick={onClick}
         color="#69FFCE"
         trailColor="#0A4A34"
-        backgroundColor="#00DD95"
-        textColor="#04110C"
+        backgroundColor="transparent"
+        textColor="#FFFFFF"
         borderColor="rgba(105,255,206,0.55)"
         radius={999}
         thickness={1.8}
         duration={5}
         glow={0.55}
         sparkle
-        className={cn(
-          'group font-semibold shadow-[0_0_0_1px_rgba(0,221,149,0.12),0_18px_60px_-14px_rgba(0,221,149,0.72)] transition-shadow duration-500 hover:shadow-[0_0_0_1px_rgba(105,255,206,0.25),0_22px_80px_-12px_rgba(0,221,149,0.9)]',
-          className,
-        )}
-        style={{ padding: '0.95rem 1.7rem', fontSize: '0.95rem', fontWeight: 600 }}
+        className={cn('group font-semibold', className)}
+        style={{
+          padding: '0.95rem 1.7rem',
+          fontSize: '0.95rem',
+          fontWeight: 600,
+          backgroundImage: 'linear-gradient(90deg, #36CDCA 0%, #00DD95 100%)',
+        }}
       >
         <span
           aria-hidden="true"

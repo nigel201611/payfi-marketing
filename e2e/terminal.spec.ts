@@ -157,8 +157,19 @@ test.describe('Naka RWA Agent terminal', () => {
     await approval.waitFor({ timeout: 12_000 });
     await approval.getByRole('button', { name: 'Reject', exact: true }).click();
 
-    await expect(page.getByRole('heading', { name: 'Payment rejected' })).toBeVisible();
-    await page.getByRole('button', { name: 'Start a new demo' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { name: 'Strategy execution & ordering' }),
+    ).toBeVisible();
+
+    const retry = page.getByRole('button', { name: 'Large payment pending approval' });
+    await expect(retry).toBeVisible();
+    await retry.click();
+    await expect(approval).toBeVisible();
+    await approval.getByRole('button', { name: 'Reject', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Reset demo' }).click();
     await expect(page.getByRole('button', { name: /Launch Agent Terminal/i })).toBeVisible();
   });
 

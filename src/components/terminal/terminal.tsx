@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { AgentMonitor } from '@/components/terminal/agent-monitor';
 import { IntentStep } from '@/components/terminal/intent-step';
 import { LaunchStep } from '@/components/terminal/launch-step';
-import { ApprovalOverlay, PaymentOverlay, RejectedOverlay } from '@/components/terminal/overlays';
+import { ApprovalOverlay, PaymentOverlay } from '@/components/terminal/overlays';
 import { ReceiptStep } from '@/components/terminal/receipt-step';
 import { SettlementStep } from '@/components/terminal/settlement-step';
 import { StrategyStep } from '@/components/terminal/strategy-step';
@@ -57,6 +57,7 @@ export function Terminal() {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [lastLaunchBrief, setLastLaunchBrief] = useState('');
+  const [retryAvailable, setRetryAvailable] = useState(false);
 
   const timers = useRef<number[]>([]);
   const runId = useRef(0);
@@ -143,12 +144,14 @@ export function Terminal() {
     setOverlay(null);
     setSettled(false);
     setReceipt(null);
+    setRetryAvailable(false);
     setStage('launch');
   };
 
   const handleLaunchSubmit = (brief: string, result: BriefAnalysisResult) => {
     setLastLaunchBrief(brief);
     setIntent((previous) => applyBriefAnalysis(previous, result.analysis));
+    setRetryAvailable(false);
     addLog('AGENT', 'agentBrief', { brief: brief.slice(0, 160) });
     addLog('AGENT', 'agentBriefAnalyzed', {
       source: result.source === 'llm' ? 'LLM' : 'policy',
@@ -159,6 +162,7 @@ export function Terminal() {
   const handleLaunchSkip = () => {
     setLastLaunchBrief('');
     setIntent(defaultIntent);
+    setRetryAvailable(false);
     handleStart();
   };
 
@@ -301,6 +305,7 @@ export function Terminal() {
     const funds = parseAmount(intent.maxBudget);
     setOrder(nextOrder);
     setSelectedAssetId(null);
+    setRetryAvailable(false);
     addLog('WEBHOOK', 'webhookDeposit', { amount: formatCurrency(funds, locale) });
     schedule(() => {
       addLog('SYS', 'sysFunds', { funds: formatCurrency(funds, locale) });
@@ -317,13 +322,34 @@ export function Terminal() {
     if (!order) return;
     addLog('OK', 'userApproved');
     addLog('AGENT', 'agentPayment');
+    setRetryAvailable(false);
     setOverlay('payment');
     beginPayment(order);
   };
 
   const handleReject = () => {
     addLog('WARN', 'userRejected');
-    setOverlay('rejected');
+    setOverlay(null);
+    setRetryAvailable(true);
+  };
+
+  const handleRetryPayment = () => {
+    if (!order) return;
+    setRetryAvailable(false);
+    setOverlay('approval');
+  };
+
+  const handleStrategyBack = () => {
+    runId.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    clearTimers();
+    setOrder(null);
+    setSelectedAssetId(null);
+    setOverlay(null);
+    setRetryAvailable(false);
+    setIntentPhase('form');
+    setStage('intent');
   };
 
   const handleConfirmReceipt = async () => {
@@ -377,6 +403,7 @@ export function Terminal() {
     setOverlay(null);
     setSettled(false);
     setReceipt(null);
+    setRetryAvailable(false);
     setLogs([]);
     seedLogs();
   };
@@ -389,7 +416,7 @@ export function Terminal() {
     : demoConfig.singleLimit;
 
   return (
-    <div className="bg-background text-foreground flex min-h-dvh flex-col">
+    <div className="bg-background text-foreground flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
       <a
         href="#terminal-main"
         className="bg-brand text-ink sr-only z-[100] rounded-full px-5 py-3 text-sm font-semibold focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
@@ -399,7 +426,7 @@ export function Terminal() {
 
       <TerminalHeader canReset={stage !== 'welcome'} onReset={handleReset} />
 
-      <div className="relative grid flex-1 lg:h-[calc(100dvh-72px)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:overflow-hidden">
+      <div className="relative grid flex-1 lg:h-[calc(100dvh-72px)] lg:min-h-0 lg:flex-none lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:overflow-hidden">
         <section className="border-border bg-workspace relative flex min-h-0 flex-col overflow-hidden lg:h-full">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             {theme === 'light' && stage === 'welcome' ? (
@@ -460,6 +487,9 @@ export function Terminal() {
                     <StrategyStep
                       availableFunds={availableFunds}
                       selectedAssetId={selectedAssetId}
+                      retryAvailable={retryAvailable}
+                      onRetry={handleRetryPayment}
+                      onBack={handleStrategyBack}
                     />
                   ) : null}
 
@@ -485,16 +515,18 @@ export function Terminal() {
             {t.common.mockFooter}
           </footer>
 
-          {overlay === 'approval' && order ? (
-            <ApprovalOverlay
-              order={order}
-              limit={singleLimit}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          ) : null}
-          {overlay === 'payment' && order ? <PaymentOverlay order={order} /> : null}
-          {overlay === 'rejected' ? <RejectedOverlay onReset={handleReset} /> : null}
+          <AnimatePresence>
+            {overlay === 'approval' && order ? (
+              <ApprovalOverlay
+                key="approval"
+                order={order}
+                limit={singleLimit}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ) : null}
+            {overlay === 'payment' && order ? <PaymentOverlay key="payment" order={order} /> : null}
+          </AnimatePresence>
         </section>
 
         <AgentMonitor logs={logs} />

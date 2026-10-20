@@ -54,7 +54,7 @@ export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
         role="log"
         aria-live="polite"
         aria-label={t.common.monitor}
-        className="terminal-scroll flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 font-mono text-[16px] leading-[1.7]"
+        className="terminal-scroll flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 font-mono text-[15.5px] leading-[1.7]"
       >
         {logs.length === 0 ? (
           <p className="text-white/30">{t.common.monitorEmpty}</p>

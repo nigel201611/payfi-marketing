@@ -6,13 +6,23 @@ import { LanguageSwitch } from '@/components/terminal/language-switch';
 import { ExioLogo } from '@/components/brand/exio-logo';
 import { NakaLogo } from '@/components/terminal/naka-logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useTheme } from '@/components/providers/theme-provider';
 import { useI18n } from '@/i18n/locale-provider';
+import { cn } from '@/lib/utils';
 
 export function TerminalHeader({ canReset, onReset }: { canReset: boolean; onReset: () => void }) {
   const { t } = useI18n();
+  const { theme } = useTheme();
 
   return (
-    <header className="border-border bg-background/80 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-40 w-full border-b backdrop-blur-xl">
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full border-b',
+        theme === 'light'
+          ? 'border-black/[0.06] bg-[#fbfcfb] shadow-[0_1px_2px_rgba(10,13,11,0.03)]'
+          : 'border-border bg-background',
+      )}
+    >
       <div className="grid h-[72px] w-full grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 items-center">
           <div className="mx-auto flex h-full w-full max-w-[940px] items-center gap-3 px-5 sm:px-8 lg:px-12">

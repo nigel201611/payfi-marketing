@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { AlertTriangle, Loader2, RotateCcw, ShieldAlert, X, XCircle } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { AlertTriangle, Loader2, ShieldAlert, X } from 'lucide-react';
+import { useTheme } from '@/components/providers/theme-provider';
 import { ActionButton, Eyebrow, StatusDot, TerminalCard } from '@/components/terminal/ui';
+import { cn } from '@/lib/utils';
 import { formatCurrency, demoConfig, type Order } from '@/constants/terminal';
 import { useI18n } from '@/i18n/locale-provider';
 
@@ -20,6 +23,8 @@ export function ApprovalOverlay({
   const { t, locale } = useI18n();
   const copy = t.approval;
   const dialogRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -48,9 +53,30 @@ export function ApprovalOverlay({
   }, []);
 
   return (
-    <div className="bg-background/80 absolute inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-md sm:p-8">
-      <div ref={dialogRef} className="max-h-full w-full max-w-[560px] overflow-y-auto">
-        <TerminalCard className="bg-card border-amber-400/25 p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.85)] sm:p-8">
+    <motion.div
+      initial={reduce ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={reduce ? undefined : { opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className={cn(
+        'absolute inset-0 z-40 flex overflow-y-auto bg-black/40 p-4 sm:p-8',
+        theme === 'dark' && 'backdrop-blur-md',
+      )}
+    >
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={reduce ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        ref={dialogRef}
+        className="m-auto w-full max-w-[600px]"
+      >
+        <TerminalCard
+          className={cn(
+            'bg-card rounded-[20px] p-6 shadow-none sm:p-8',
+            theme === 'dark' ? 'border border-white/10' : 'border-0',
+          )}
+        >
           <div role="dialog" aria-modal="true" aria-labelledby="approval-title">
             <div className="flex items-center justify-between">
               <Eyebrow className="text-amber-500 dark:text-amber-300">{copy.eyebrow}</Eyebrow>
@@ -62,7 +88,7 @@ export function ApprovalOverlay({
 
             <h2
               id="approval-title"
-              className="font-display text-foreground mt-4 text-[1.8rem] leading-tight font-extrabold tracking-[-0.04em] sm:text-[2.2rem]"
+              className="font-display text-foreground mt-4 text-[1.75rem] leading-tight font-extrabold tracking-[-0.04em] sm:text-[2rem] sm:whitespace-nowrap"
             >
               {copy.title}
             </h2>
@@ -127,8 +153,8 @@ export function ApprovalOverlay({
             </p>
           </div>
         </TerminalCard>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -136,11 +162,28 @@ export function PaymentOverlay({ order }: { order: Order }) {
   const { t, locale } = useI18n();
   const copy = t.payment;
   const isAuto = order.scenario === 'small';
+  const reduce = useReducedMotion();
+  const { theme } = useTheme();
 
   return (
-    <div className="bg-background/80 absolute inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-md sm:p-8">
-      <div className="max-h-full w-full max-w-[520px] overflow-y-auto">
-        <TerminalCard className="border-brand/20 bg-card p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.85)] sm:p-8">
+    <motion.div
+      initial={reduce ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={reduce ? undefined : { opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className={cn(
+        'absolute inset-0 z-40 flex overflow-y-auto bg-black/40 p-4 sm:p-8',
+        theme === 'dark' && 'backdrop-blur-md',
+      )}
+    >
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={reduce ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        className="m-auto w-full max-w-[520px]"
+      >
+        <TerminalCard className="border-brand/20 bg-card p-6 sm:p-8">
           <div role="dialog" aria-modal="true" aria-labelledby="payment-title">
             <Eyebrow>{copy.eyebrow}</Eyebrow>
             <div className="mt-4 flex items-center gap-3">
@@ -190,44 +233,7 @@ export function PaymentOverlay({ order }: { order: Order }) {
             </p>
           </div>
         </TerminalCard>
-      </div>
-    </div>
-  );
-}
-
-export function RejectedOverlay({ onReset }: { onReset: () => void }) {
-  const { t } = useI18n();
-  const copy = t.approval;
-
-  return (
-    <div className="bg-background/80 absolute inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-md sm:p-8">
-      <div className="w-full max-w-[480px]">
-        <TerminalCard className="bg-card border-red-400/20 p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.85)] sm:p-8">
-          <div role="dialog" aria-modal="true" aria-labelledby="rejected-title">
-            <span className="grid size-11 place-items-center rounded-xl border border-red-400/20 bg-red-400/[0.06] text-red-500 dark:text-red-300">
-              <XCircle className="size-5" aria-hidden="true" />
-            </span>
-            <h2
-              id="rejected-title"
-              className="font-display text-foreground mt-5 text-2xl font-extrabold tracking-[-0.04em]"
-            >
-              {copy.rejectedTitle}
-            </h2>
-            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              {copy.rejectedBody}
-            </p>
-            <button
-              type="button"
-              onClick={onReset}
-              autoFocus
-              className="border-border bg-card/60 text-foreground/80 hover:bg-card hover:text-foreground mt-6 inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors"
-            >
-              <RotateCcw className="size-4" aria-hidden="true" />
-              {copy.reset}
-            </button>
-          </div>
-        </TerminalCard>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
