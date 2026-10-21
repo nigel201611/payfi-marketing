@@ -101,9 +101,10 @@ e2e/                   # Playwright flows
   the CRB MCP and order/on-chain/delivery tools to the RWA MCP; each side falls back to the mock
   independently when its URL is empty.
 - The LLM planner is optional. `AGENT_LLM_PROVIDER` selects `deepseek` / `kimi` / `codex` /
-  `openai`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` and
-  `OPENAI_API_KEY`. `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`, `AGENT_LLM_MODEL` and
-  `AGENT_LLM_PROTOCOL` override the preset; Codex uses the OpenAI Responses API. Without a key the
+  `openai` / `glm`; provider keys fall back to `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY`,
+  `OPENAI_API_KEY` and `ZHIPU_API_KEY`. `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`,
+  `AGENT_LLM_MODEL` and `AGENT_LLM_PROTOCOL` override the preset; Codex uses the OpenAI Responses
+  API. GLM-5.3 always thinks, so the preset pins `reasoning_effort: low`. Without a key the
   deterministic plan runs. LLM output is rejected unless the order, payee, amount and wallet match
   the authorized intent exactly.
 - These secrets are server-only; never expose them through `NEXT_PUBLIC_*`.

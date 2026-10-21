@@ -59,7 +59,7 @@ export function ApprovalOverlay({
       exit={reduce ? undefined : { opacity: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'absolute inset-0 z-40 flex overflow-y-auto bg-black/40 p-4 sm:p-8',
+        'fixed inset-0 z-[60] flex overflow-y-auto overscroll-contain bg-black/40 p-3 sm:p-8 lg:absolute lg:z-40',
         theme === 'dark' && 'backdrop-blur-md',
       )}
     >
@@ -73,12 +73,12 @@ export function ApprovalOverlay({
       >
         <TerminalCard
           className={cn(
-            'bg-card rounded-[20px] p-6 shadow-none sm:p-8',
+            'bg-card rounded-[20px] p-5 shadow-none sm:p-8',
             theme === 'dark' ? 'border border-white/10' : 'border-0',
           )}
         >
           <div role="dialog" aria-modal="true" aria-labelledby="approval-title">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Eyebrow className="text-amber-500 dark:text-amber-300">{copy.eyebrow}</Eyebrow>
               <span className="flex items-center gap-1.5 rounded-full bg-amber-400/10 px-2.5 py-1 text-[0.6rem] font-semibold text-amber-600 dark:text-amber-300">
                 <AlertTriangle className="size-3" aria-hidden="true" />
@@ -88,7 +88,7 @@ export function ApprovalOverlay({
 
             <h2
               id="approval-title"
-              className="font-display text-foreground mt-4 text-[1.75rem] leading-tight font-extrabold tracking-[-0.04em] sm:text-[2rem] sm:whitespace-nowrap"
+              className="font-display text-foreground mt-4 text-[clamp(1.15rem,5.4vw,1.75rem)] leading-tight font-extrabold tracking-[-0.04em] min-[360px]:whitespace-nowrap sm:text-[2rem]"
             >
               {copy.title}
             </h2>
@@ -130,15 +130,20 @@ export function ApprovalOverlay({
               </dl>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-              <ActionButton variant="outline" size="lg" onClick={onReject} className="flex-1">
+            <div className="mt-6 flex gap-2">
+              <ActionButton
+                variant="outline"
+                size="lg"
+                onClick={onReject}
+                className="flex-1 px-4 sm:px-7"
+              >
                 <X className="size-4" aria-hidden="true" />
                 {copy.reject}
               </ActionButton>
               <ActionButton
                 size="lg"
                 onClick={onApprove}
-                className="flex-[1.5]"
+                className="flex-[1.5] px-4 sm:px-7"
                 data-primary-action
                 autoFocus
               >
@@ -172,7 +177,7 @@ export function PaymentOverlay({ order }: { order: Order }) {
       exit={reduce ? undefined : { opacity: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'absolute inset-0 z-40 flex overflow-y-auto bg-black/40 p-4 sm:p-8',
+        'fixed inset-0 z-[60] flex overflow-y-auto overscroll-contain bg-black/40 p-3 sm:p-8 lg:absolute lg:z-40',
         theme === 'dark' && 'backdrop-blur-md',
       )}
     >
@@ -183,7 +188,7 @@ export function PaymentOverlay({ order }: { order: Order }) {
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         className="m-auto w-full max-w-[520px]"
       >
-        <TerminalCard className="border-brand/20 bg-card p-6 sm:p-8">
+        <TerminalCard className="border-brand/20 bg-card p-5 sm:p-8">
           <div role="dialog" aria-modal="true" aria-labelledby="payment-title">
             <Eyebrow>{copy.eyebrow}</Eyebrow>
             <div className="mt-4 flex items-center gap-3">

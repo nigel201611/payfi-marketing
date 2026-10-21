@@ -33,7 +33,7 @@ export function AgentMonitor({ logs }: { logs: LogEntry[] }) {
   }, [logs.length]);
 
   return (
-    <aside className="flex h-[62dvh] min-h-0 shrink-0 flex-col border-t border-white/[0.08] bg-[#050706] text-white shadow-[-30px_0_70px_-50px_rgba(0,221,149,0.18)] lg:h-full lg:border-t-0 lg:border-l lg:border-white/10">
+    <aside className="flex h-[62dvh] min-h-0 min-w-0 shrink-0 flex-col border-t border-white/[0.08] bg-[#050706] text-white shadow-[-30px_0_70px_-50px_rgba(0,221,149,0.18)] lg:h-full lg:border-t-0 lg:border-l lg:border-white/10">
       <div className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-5 py-4">
         <div className="flex items-center gap-2.5">
           <span

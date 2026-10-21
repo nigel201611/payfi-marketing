@@ -54,17 +54,18 @@ Browser
 
 ### 3.2 Agent / LLM 变量（仅服务端）
 
-| 变量                   | 必填 | 默认值      | 说明                                     |
-| ---------------------- | ---- | ----------- | ---------------------------------------- |
-| `AGENT_LLM_PROVIDER`   | 否   | `deepseek`  | `deepseek` / `kimi` / `codex` / `openai` |
-| `AGENT_LLM_API_KEY`    | 否   | 空          | 通用密钥，优先级高于 provider 专属密钥   |
-| `AGENT_LLM_BASE_URL`   | 否   | 按 provider | 覆盖预设 Base URL                        |
-| `AGENT_LLM_MODEL`      | 否   | 按 provider | 覆盖预设模型                             |
-| `AGENT_LLM_PROTOCOL`   | 否   | 按 provider | `chat-completions` 或 `responses`        |
-| `AGENT_LLM_TIMEOUT_MS` | 否   | `4000`      | 单次规划请求超时                         |
-| `DEEPSEEK_API_KEY`     | 否   | 空          | DeepSeek 专属密钥                        |
-| `MOONSHOT_API_KEY`     | 否   | 空          | Kimi / Moonshot 专属密钥                 |
-| `OPENAI_API_KEY`       | 否   | 空          | OpenAI / Codex 专属密钥                  |
+| 变量                   | 必填 | 默认值      | 说明                                             |
+| ---------------------- | ---- | ----------- | ------------------------------------------------ |
+| `AGENT_LLM_PROVIDER`   | 否   | `deepseek`  | `deepseek` / `kimi` / `codex` / `openai` / `glm` |
+| `AGENT_LLM_API_KEY`    | 否   | 空          | 通用密钥，优先级高于 provider 专属密钥           |
+| `AGENT_LLM_BASE_URL`   | 否   | 按 provider | 覆盖预设 Base URL                                |
+| `AGENT_LLM_MODEL`      | 否   | 按 provider | 覆盖预设模型                                     |
+| `AGENT_LLM_PROTOCOL`   | 否   | 按 provider | `chat-completions` 或 `responses`                |
+| `AGENT_LLM_TIMEOUT_MS` | 否   | `4000`      | 单次规划请求超时                                 |
+| `DEEPSEEK_API_KEY`     | 否   | 空          | DeepSeek 专属密钥                                |
+| `MOONSHOT_API_KEY`     | 否   | 空          | Kimi / Moonshot 专属密钥                         |
+| `OPENAI_API_KEY`       | 否   | 空          | OpenAI / Codex 专属密钥                          |
+| `ZHIPU_API_KEY`        | 否   | 空          | 智谱 GLM 专属密钥                                |
 
 未配置任何可用密钥时，应用自动使用确定性结算计划，不影响演示。
 
@@ -90,12 +91,13 @@ Browser
 
 ### 4.1 Provider 预设
 
-| Provider   | 默认模型            | 默认 Base URL                 | 协议             | 密钥变量           |
-| ---------- | ------------------- | ----------------------------- | ---------------- | ------------------ |
-| `deepseek` | `deepseek-flash`    | `https://api.deepseek.com/v1` | Chat Completions | `DEEPSEEK_API_KEY` |
-| `kimi`     | `kimi-k3`           | `https://api.moonshot.ai/v1`  | Chat Completions | `MOONSHOT_API_KEY` |
-| `codex`    | `gpt-5.1-codex-max` | `https://api.openai.com/v1`   | Responses API    | `OPENAI_API_KEY`   |
-| `openai`   | `gpt-5.1`           | `https://api.openai.com/v1`   | Chat Completions | `OPENAI_API_KEY`   |
+| Provider   | 默认模型            | 默认 Base URL                          | 协议             | 密钥变量           |
+| ---------- | ------------------- | -------------------------------------- | ---------------- | ------------------ |
+| `deepseek` | `deepseek-flash`    | `https://api.deepseek.com/v1`          | Chat Completions | `DEEPSEEK_API_KEY` |
+| `kimi`     | `kimi-k3`           | `https://api.moonshot.ai/v1`           | Chat Completions | `MOONSHOT_API_KEY` |
+| `codex`    | `gpt-5.1-codex-max` | `https://api.openai.com/v1`            | Responses API    | `OPENAI_API_KEY`   |
+| `openai`   | `gpt-5.1`           | `https://api.openai.com/v1`            | Chat Completions | `OPENAI_API_KEY`   |
+| `glm`      | `glm-5.3`           | `https://open.bigmodel.cn/api/paas/v4` | Chat Completions | `ZHIPU_API_KEY`    |
 
 Kimi 说明：
 
@@ -109,6 +111,15 @@ Codex 说明：
 - 预设已自动使用 `AGENT_LLM_PROTOCOL=responses`
 - 若网关只提供 Chat Completions，请改用 `openai`，并通过 `AGENT_LLM_BASE_URL` /
   `AGENT_LLM_MODEL` 指向兼容网关
+
+GLM 说明：
+
+- 预设使用智谱 BigModel 国内站 `https://open.bigmodel.cn/api/paas/v4`
+- Z.ai 国际站需通过 `AGENT_LLM_BASE_URL=https://api.z.ai/api/paas/v4` 覆盖
+- GLM-5.3 始终开启思考且不支持关闭；预设固定 `reasoning_effort=low` 以兼顾 4 秒超时，
+  需要更强推理时可调整 `src/lib/agent/llm.ts` 中的预设或增大 `AGENT_LLM_TIMEOUT_MS`
+- GLM Coding Plan 使用独立端点 `https://open.bigmodel.cn/api/coding/paas/v4`，不要与标准
+  API 混用
 
 ### 4.2 配置示例
 
@@ -133,6 +144,15 @@ OPENAI_API_KEY=sk-***
 # OpenAI
 AGENT_LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-***
+
+# 智谱 GLM（BigModel 国内站）
+AGENT_LLM_PROVIDER=glm
+ZHIPU_API_KEY=sk-***
+
+# 智谱 GLM（Z.ai 国际站）
+AGENT_LLM_PROVIDER=glm
+ZHIPU_API_KEY=sk-***
+AGENT_LLM_BASE_URL=https://api.z.ai/api/paas/v4
 
 # 兼容网关（沿用 openai 预设，覆盖 Base URL / 模型）
 AGENT_LLM_PROVIDER=openai

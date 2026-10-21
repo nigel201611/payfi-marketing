@@ -426,8 +426,8 @@ export function Terminal() {
 
       <TerminalHeader canReset={stage !== 'welcome'} onReset={handleReset} />
 
-      <div className="relative grid flex-1 lg:h-[calc(100dvh-72px)] lg:min-h-0 lg:flex-none lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:overflow-hidden">
-        <section className="border-border bg-workspace relative flex min-h-0 flex-col overflow-hidden lg:h-full">
+      <div className="relative grid flex-1 grid-cols-1 lg:h-[calc(100dvh-72px)] lg:min-h-0 lg:flex-none lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:overflow-hidden">
+        <section className="border-border bg-workspace relative flex min-h-0 min-w-0 flex-col overflow-hidden lg:h-full">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             {theme === 'light' && stage === 'welcome' ? (
               <>

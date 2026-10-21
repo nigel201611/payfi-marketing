@@ -177,7 +177,24 @@ test.describe('Naka RWA Agent terminal', () => {
     test.skip(testInfo.project.name !== 'mobile', 'Mobile-only smoke test');
     await openTerminal(page);
     await expect(page.getByRole('button', { name: /Launch Agent Terminal/i })).toBeVisible();
+    await page.evaluate(() =>
+      window.localStorage.setItem(
+        'naka-launch-history',
+        JSON.stringify([
+          'Buy $16,000 of 30-day U.S. Treasury bonds with low risk, T+0 settlement.',
+        ]),
+      ),
+    );
     await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+    await page.getByRole('textbox', { name: 'Purchase brief' }).waitFor();
+
+    const launchPanel = await page.evaluate(() => {
+      const panel = document.querySelector<HTMLElement>('[style*="--spotlight-card-surface"]');
+      return panel ? { scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth } : null;
+    });
+    if (!launchPanel) throw new Error('Launch panel is not visible');
+    expect(launchPanel.scrollWidth).toBeLessThanOrEqual(launchPanel.clientWidth);
+
     await page.getByRole('button', { name: 'Skip and use defaults' }).click();
     await expect(
       page.getByRole('heading', { name: 'Intent authorization & funding' }),
@@ -187,5 +204,51 @@ test.describe('Naka RWA Agent terminal', () => {
       clientWidth: document.documentElement.clientWidth,
     }));
     expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+
+    const wallet = page.locator('#custody-wallet');
+    await wallet.scrollIntoViewIfNeeded();
+    const walletBox = await wallet.boundingBox();
+    if (!walletBox) throw new Error('Custody wallet trigger is not visible');
+    const walletCenter = {
+      x: walletBox.x + walletBox.width / 2,
+      y: walletBox.y + walletBox.height / 2,
+    };
+    const walletArrow = {
+      x: walletBox.x + walletBox.width - 20,
+      y: walletBox.y + walletBox.height / 2,
+    };
+
+    await page.touchscreen.tap(walletCenter.x, walletCenter.y);
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await page.touchscreen.tap(walletCenter.x, walletCenter.y);
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+
+    await page.touchscreen.tap(walletArrow.x, walletArrow.y);
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await page.touchscreen.tap(walletArrow.x, walletArrow.y);
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Confirm authorization' }).click();
+    await page.getByRole('button', { name: /Simulate deposit — Large payment/i }).click();
+    const approval = page.getByRole('dialog').filter({ hasText: 'Agent requests a large payment' });
+    await approval.waitFor({ timeout: 12_000 });
+
+    const approvalOverflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(approvalOverflow.scrollWidth).toBeLessThanOrEqual(approvalOverflow.clientWidth);
+
+    const titleLines = await approval.getByRole('heading').evaluate((heading) => {
+      const style = getComputedStyle(heading);
+      return heading.getBoundingClientRect().height / parseFloat(style.lineHeight);
+    });
+    expect(titleLines).toBeLessThan(1.5);
+
+    const buttonHeights = await approval
+      .getByRole('button')
+      .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().height));
+    expect(buttonHeights).toHaveLength(2);
+    expect(buttonHeights.every((height) => height >= 44)).toBe(true);
   });
 });

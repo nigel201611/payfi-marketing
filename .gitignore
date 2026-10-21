@@ -8,6 +8,8 @@
 /.next-dev/
 /out/
 next-env.d.ts
+# stray static-export output accidentally committed to the repo root
+/_next/
 
 # production
 /build
