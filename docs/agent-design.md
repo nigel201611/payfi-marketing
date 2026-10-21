@@ -77,6 +77,11 @@ Step 01 的 brief 在进入本地解析或 LLM 前，还会先经过确定性输
 | MCP 调用                  | BFF `/api/mcp/tool`，可转发 CRB/RWA MCP               | 浏览器内 mock transport                                  |
 | BFF 路由                  | 保留                                                  | `.server.ts` 被 `pageExtensions` / `output: export` 剔除 |
 
+这里的“静态导出”指 `GITHUB_PAGES=true` 触发的 Next.js `output: 'export'` 构建
+（`pnpm build:pages`）：产物是纯静态文件（`out/`，basePath `/payfi-marketing`），没有 Node/BFF
+运行时，由 `.github/workflows/deploy-pages.yml` 发布到 GitHub Pages。因此该模式只能使用浏览器
+mock + 确定性分析/计划，无法使用 LLM 或真实 MCP。
+
 ### 3.3 架构图
 
 ```mermaid
