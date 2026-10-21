@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Coins, Landmark, Leaf, Loader2 } from 'lucide-react';
 import AnimatedContent from '@/components/react-bits/AnimatedContent';
 import { ActionButton, FieldLabel, StatusDot, TextField } from '@/components/terminal/ui';
@@ -57,6 +57,21 @@ export function IntentStep({
   const { t } = useI18n();
   const copy = t.intent;
   const selectedWallet = copy.wallets.find((wallet) => wallet.value === intent.wallet);
+  const [walletOpen, setWalletOpen] = useState(false);
+  const walletOpenRef = useRef(false);
+  const walletWasOpenOnPointerDown = useRef(false);
+
+  useEffect(() => {
+    walletOpenRef.current = walletOpen;
+  }, [walletOpen]);
+
+  useEffect(() => {
+    const handlePointerDown = () => {
+      walletWasOpenOnPointerDown.current = walletOpenRef.current;
+    };
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true);
+  }, []);
 
   return (
     <div className="py-8 lg:py-10">
@@ -297,12 +312,21 @@ export function IntentStep({
                   {copy.custodyLabel}
                 </FieldLabel>
                 <Select
+                  open={walletOpen}
+                  onOpenChange={setWalletOpen}
                   value={intent.wallet}
                   onValueChange={(value) => onChange({ wallet: value as 'a' | 'b' })}
                 >
                   <SelectTrigger
                     id="custody-wallet"
                     className="bg-foreground/[0.03] focus-visible:ring-brand/30 h-12 rounded-lg border-0 px-3.5 py-1.5 text-left"
+                    onClick={(event) => {
+                      // Radix reopens on the click that follows its touch dismiss; suppress it.
+                      if (!walletWasOpenOnPointerDown.current) return;
+                      walletWasOpenOnPointerDown.current = false;
+                      event.preventDefault();
+                      setWalletOpen(false);
+                    }}
                   >
                     <span className="flex min-w-0 flex-col items-start">
                       <span className="text-foreground truncate font-mono text-sm font-semibold">
