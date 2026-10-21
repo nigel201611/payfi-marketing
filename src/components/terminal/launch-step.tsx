@@ -84,7 +84,7 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
       </p>
 
       <VaraPanel>
-        <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <div className="space-y-5 p-5 sm:p-7 lg:p-8">
             <div className="flex gap-3">
               <span className="bg-brand/10 text-accent-text grid size-8 shrink-0 place-items-center rounded-full">

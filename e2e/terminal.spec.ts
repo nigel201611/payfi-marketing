@@ -177,7 +177,24 @@ test.describe('Naka RWA Agent terminal', () => {
     test.skip(testInfo.project.name !== 'mobile', 'Mobile-only smoke test');
     await openTerminal(page);
     await expect(page.getByRole('button', { name: /Launch Agent Terminal/i })).toBeVisible();
+    await page.evaluate(() =>
+      window.localStorage.setItem(
+        'naka-launch-history',
+        JSON.stringify([
+          'Buy $16,000 of 30-day U.S. Treasury bonds with low risk, T+0 settlement.',
+        ]),
+      ),
+    );
     await page.getByRole('button', { name: /Launch Agent Terminal/i }).click();
+    await page.getByRole('textbox', { name: 'Purchase brief' }).waitFor();
+
+    const launchPanel = await page.evaluate(() => {
+      const panel = document.querySelector<HTMLElement>('[style*="--spotlight-card-surface"]');
+      return panel ? { scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth } : null;
+    });
+    if (!launchPanel) throw new Error('Launch panel is not visible');
+    expect(launchPanel.scrollWidth).toBeLessThanOrEqual(launchPanel.clientWidth);
+
     await page.getByRole('button', { name: 'Skip and use defaults' }).click();
     await expect(
       page.getByRole('heading', { name: 'Intent authorization & funding' }),

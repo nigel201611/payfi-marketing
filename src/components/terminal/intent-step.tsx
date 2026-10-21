@@ -91,7 +91,7 @@ export function IntentStep({
 
       {phase === 'form' ? (
         <VaraPanel>
-          <div className="grid lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)]">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)]">
             <div className="space-y-8 p-5 sm:p-7 lg:p-8">
               <fieldset>
                 <legend className="sr-only">{copy.categoriesLabel}</legend>
@@ -408,7 +408,7 @@ function FundingPanel({
 
   return (
     <VaraPanel>
-      <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="p-5 sm:p-7 lg:p-8">
           <p className="text-muted-foreground text-sm font-medium">{copy.eyebrow}</p>
           <h3 className="font-display text-foreground mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">
