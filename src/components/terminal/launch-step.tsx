@@ -5,8 +5,12 @@ import { ArrowLeft, ArrowRight, Clock3, Loader2, Sparkles } from 'lucide-react';
 import { VaraPanel } from '@/components/terminal/vara-panel';
 import { ActionButton } from '@/components/terminal/ui';
 import { useI18n } from '@/i18n/locale-provider';
+import { classifyBrief, type BriefClassification } from '@/lib/brief-guard';
 import { requestBriefAnalysis, type BriefAnalysisResult } from '@/lib/launch-analysis';
 import { mergeLaunchBrief, readLaunchHistory, writeLaunchHistory } from '@/lib/launch-history';
+import { cn } from '@/lib/utils';
+
+type BriefRejection = Exclude<BriefClassification, 'valid'>;
 
 type LaunchStepProps = {
   initialBrief?: string;
@@ -23,6 +27,7 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
   const [brief, setBrief] = useState(initialBrief);
   const [history, setHistory] = useState<string[]>(() => readLaunchHistory());
   const [analyzing, setAnalyzing] = useState(false);
+  const [briefError, setBriefError] = useState<BriefRejection | null>(null);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -33,6 +38,14 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
   async function submit() {
     const text = brief.trim();
     if (!text || analyzing || abortRef.current) return;
+
+    const classification = classifyBrief(text);
+    if (classification !== 'valid') {
+      setBriefError(classification);
+      textareaRef.current?.focus();
+      return;
+    }
+    setBriefError(null);
 
     const next = mergeLaunchBrief(text, history);
     setHistory(next);
@@ -61,6 +74,7 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
 
   function applyBrief(text: string) {
     setBrief(text);
+    setBriefError(null);
     textareaRef.current?.focus();
   }
 
@@ -95,7 +109,12 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
               </p>
             </div>
 
-            <div className="bg-foreground/[0.03] focus-within:ring-brand/30 rounded-xl px-4 py-3 transition-shadow focus-within:ring-2">
+            <div
+              className={cn(
+                'bg-foreground/[0.03] rounded-xl px-4 py-3 transition-shadow focus-within:ring-2',
+                briefError ? 'ring-destructive/30 ring-2' : 'focus-within:ring-brand/30',
+              )}
+            >
               <label htmlFor="launch-brief" className="sr-only">
                 {copy.inputLabel}
               </label>
@@ -104,10 +123,16 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
                 ref={textareaRef}
                 autoFocus
                 rows={5}
+                maxLength={500}
                 value={brief}
-                onChange={(event) => setBrief(event.target.value)}
+                onChange={(event) => {
+                  setBrief(event.target.value);
+                  setBriefError(null);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={copy.placeholder}
+                aria-invalid={briefError !== null}
+                aria-describedby={briefError ? 'launch-brief-error' : undefined}
                 className="text-foreground placeholder:text-muted-foreground/60 w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
               />
               <div className="mt-2 flex items-center justify-between gap-3">
@@ -127,6 +152,16 @@ export function LaunchStep({ initialBrief = '', onBack, onSubmit, onSkip }: Laun
                 </ActionButton>
               </div>
             </div>
+
+            {briefError ? (
+              <p
+                id="launch-brief-error"
+                role="alert"
+                className="border-destructive/30 bg-destructive/[0.06] text-destructive rounded-lg border px-3.5 py-2.5 text-xs font-semibold"
+              >
+                {copy.guard[briefError]}
+              </p>
+            ) : null}
 
             <div>
               <p className="text-foreground/60 text-xs font-semibold">{copy.presetsLabel}</p>

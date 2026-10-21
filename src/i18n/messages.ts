@@ -54,6 +54,12 @@ const en = {
     submitHint: '⌘/Ctrl + Enter to start',
     analyzing: 'Analyzing brief...',
     start: 'Start terminal',
+    guard: {
+      malicious:
+        'This looks like an instruction override or fund-redirection attempt. Only RWA purchase briefs are accepted.',
+      irrelevant:
+        'This does not look like an RWA purchase brief. Describe what you want to buy, your budget, risk and settlement preference.',
+    },
     presetsLabel: 'Suggested briefs',
     presets: [
       'Buy low-risk money market funds with a $50,000 budget.',
@@ -328,6 +334,10 @@ const zh: Messages = {
     submitHint: '⌘/Ctrl + Enter 启动',
     analyzing: '正在分析购买需求...',
     start: '启动终端',
+    guard: {
+      malicious: '该输入疑似指令覆盖或资金改道尝试，仅接受 RWA 购买需求。',
+      irrelevant: '这不像一条 RWA 购买需求。请描述想买的资产、预算、风险和结算偏好。',
+    },
     presetsLabel: '推荐话术',
     presets: [
       '买入低风险货币基金，预算 $50,000。',

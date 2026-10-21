@@ -3,7 +3,8 @@
 A bilingual, full-screen roadshow demo for compliant RWA purchases made by an AI agent.
 
 The terminal follows the product flow in [`docs/agentic-payment-prd.md`](docs/agentic-payment-prd.md)
-and the visual/UX reference at <https://6klwjyb3jee3c.ok.kimi.link/>:
+(implementation details in [`docs/agent-design.md`](docs/agent-design.md)) and the visual/UX
+reference at <https://6klwjyb3jee3c.ok.kimi.link/>:
 
 ```text
 Welcome / KYC
@@ -85,6 +86,8 @@ src/
     locale-provider.tsx
 docs/
   agentic-payment-prd.md
+  agent-design.md
+  operations-environment.md
 ```
 
 ## Mock Data

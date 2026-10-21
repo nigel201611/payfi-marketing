@@ -1,4 +1,5 @@
 import { requestLlmBriefAnalysis } from '@/lib/agent/llm';
+import { classifyBrief } from '@/lib/brief-guard';
 import { analyzeBriefLocally, validateBriefAnalysis } from '@/lib/intent-parser';
 import { isRecord } from '@/lib/mcp/types';
 
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
   const brief = body.brief.trim().slice(0, 500);
   if (!brief) {
     return Response.json({ error: 'Brief is empty' }, { status: 400 });
+  }
+
+  // The browser checks the same guard first; keep the BFF protected against direct calls too.
+  if (classifyBrief(brief) !== 'valid') {
+    return Response.json({ error: 'Brief rejected by policy guard' }, { status: 422 });
   }
 
   const fallback = analyzeBriefLocally(brief);

@@ -6,6 +6,7 @@ A bilingual roadshow demo for compliant RWA purchases made by an AI agent. The p
 > **References**
 >
 > - Product PRD: `docs/agentic-payment-prd.md`
+> - Agent logic & design: `docs/agent-design.md`
 > - Ops/env config: `docs/operations-environment.md`
 > - UI prototype: https://6klwjyb3jee3c.ok.kimi.link/
 > - Design continuity: the earlier EX.IO / Stripe-inspired dark-light system in this repo
@@ -64,7 +65,7 @@ src/
   i18n/
     messages.ts        # all EN/ZH UI + log + receipt copy
     locale-provider.tsx
-docs/                  # PRD and product documentation
+docs/                  # PRD, agent design, and ops documentation
 __tests__/             # Vitest (helpers + dictionary parity)
 e2e/                   # Playwright flows
 ```
@@ -92,9 +93,10 @@ e2e/                   # Playwright flows
   deterministic fallback), `/api/agent/plan` (deterministic policy + optional LLM planner) and
   `/api/mcp/tool` (MCP facade). The `.server.ts` extension plus `pageExtensions` in
   `next.config.ts` keeps them out of the Pages static export.
-- Launch flow: Welcome → Step 01 intake stage → Step 02 intent. The intake brief is analyzed by the
-  LLM when configured; back from intent aborts the in-flight analysis, clears intent/order/timer
-  state and keeps the last brief plus the five most recent briefs in localStorage.
+- Launch flow: Welcome → Step 01 intake stage → Step 02 intent. `classifyBrief()` rejects malicious
+  or unrelated briefs before any parse/LLM call (the intake BFF repeats the check); valid briefs are
+  analyzed by the LLM when configured. Back from intent aborts the in-flight analysis, clears
+  intent/order/timer state and keeps the last brief plus the five most recent briefs in localStorage.
 - Runtime transport: `NEXT_PUBLIC_BFF_ENABLED=true` calls the BFF; static Pages builds use the
   in-browser mock. Set `MCP_CRB_SERVER_URL` / `MCP_CRB_SERVER_TOKEN` and `MCP_RWA_SERVER_URL` /
   `MCP_RWA_SERVER_TOKEN` on the server. `mcpToolServer` routes CRB funding/payment/verification to
